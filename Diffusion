@@ -1,0 +1,373 @@
+
+import java.awt.Color;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Random;
+
+public class Diffusion {
+static final int height = 20;
+static final int width = 20;
+static final int steps = 10; //steps added together before moving
+static final float stepSize = 0.1f;
+static final int move = 5; //move n positions
+static final int nReceptors = 3 ; //should not exceed height*width 
+static final float[][] receptorArray = new float[nReceptors][3];
+static final float[][] moveArray = new float[nReceptors][3];
+static final float[][] stepArray = new float[nReceptors][3];
+static final int switchActive = 5;
+static final int switchInactive = 10 - switchActive;
+
+
+static ArrayList<Float> eventArray = new ArrayList<Float>();
+
+	public static void main(String args[]) throws IOException{
+		
+		Thread t1 = new Thread(new Runnable(){
+			
+			@Override
+			public void run(){
+				long startTime1 =  System.currentTimeMillis();
+			
+				initialArray();
+			
+				checkArray();
+				
+				long endTime1 =  System.currentTimeMillis();
+				long totalTime1 = endTime1 - startTime1;
+				System.out.println("Current simulation runtime is: "+ totalTime1 +" milliseconds");
+			}
+			
+		});
+		Thread t2 = new Thread(new Runnable(){
+			
+			@Override 
+			public void run(){
+				long startTime2 =  System.currentTimeMillis();
+				
+				try {
+					Thread.sleep(300);
+				} catch (InterruptedException e) {
+				
+					e.printStackTrace();
+				}
+				
+				FileOutputStream fileOS = null;
+				
+				try {
+					fileOS = new FileOutputStream("C:\\Users\\Mike\\Documents\\BinaryFile.bin");
+				} catch (FileNotFoundException e1) {
+					
+					e1.printStackTrace();
+				}
+				int recCheck = 0;
+				for(int i = 0; i <= move; i++){  //move i times
+									
+						movementArray();	
+					
+						addArrays(); 
+							
+						ByteArrayOutputStream bas = new ByteArrayOutputStream();
+						DataOutputStream ds = new DataOutputStream(bas);
+						
+						
+						while(recCheck == 0){
+						try {
+							ds.writeFloat(nReceptors);
+							ds.writeFloat(steps);
+							ds.writeFloat(move);
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						recCheck++;
+						}
+						for(int j = 0;  j <= receptorArray.length - 1; j++){
+							for(int k = 0; k <= receptorArray[j].length - 1; k++){
+							try {
+								ds.writeFloat(receptorArray[j][k]);
+								
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+										
+							}
+						}
+						byte[] byteData = bas.toByteArray();
+						
+						
+						try {
+							fileOS.write(byteData, 0, byteData.length);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						try {
+							fileOS.flush();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						//eventCheck();
+									
+			}
+		
+				try {
+					fileOS.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				long endTime2 =  System.currentTimeMillis();
+				long totalTime2 = endTime2 - startTime2;
+				System.out.println("Current simulation runtime is: "+ totalTime2 +" milliseconds");
+			}
+	});
+		
+		t1.start();
+		t2.start();
+	
+		try {
+			t1.join();
+			t2.join();
+		} catch (InterruptedException e) {
+			
+			e.printStackTrace();
+		}
+								
+				
+	}	//main end
+	
+	 public static synchronized void initialArray(){
+	
+		 Random rand = new Random();
+		 for(int i = 0; i <= nReceptors - 1; i++){
+		
+			int randReceptor = rand.nextInt(2); //0 inactive, 1 active
+			int randRow = rand.nextInt(height);//random row within height constraint 
+			int randCol = rand.nextInt(width);//random column within width constraint 
+		
+				receptorArray[i][0] = randReceptor;
+				receptorArray[i][1] = randRow;
+				receptorArray[i][2] = randCol;						
+		}
+		 	System.out.println("Initial Array is :");
+			System.out.println(Arrays.deepToString(receptorArray)); 
+			
+	}//intialArray end
+ 	 
+	 public static synchronized void checkArray(){// makes sure initialArray receptors don't occupy same spot initially
+		 
+		 
+		 int jRandReplaceRow = 0;
+		 int jRandReplaceCol = 0;
+	
+	
+		 for(int i = 0; i <= receptorArray.length - 1; i++){
+			 for(int j = 0; j <= receptorArray.length - 1; j++){
+				 if(receptorArray[i][1] == receptorArray[j][1] && receptorArray[i][2] == receptorArray[j][2] && i != j){ //satisfied if there is a match
+					    
+						System.out.println(receptorArray[i][1]+ " from " + i +" row "+ " matches " + receptorArray[j][1] + " from " + j + " row");
+						System.out.println(receptorArray[i][2]+ " from " + i +" column " + " matches " + receptorArray[j][2] + " from " + j + " column");
+
+						int checkCount = 0;
+						
+						//if match, activate this for loop
+						for(int k = 0; k <= receptorArray.length - 1; k++){
+							
+							jRandReplaceRow = jRow();
+							jRandReplaceCol = jCol();
+							if(receptorArray[k][1] == jRandReplaceRow && receptorArray[k][2] == jRandReplaceCol){//satisfied if random numbers match array elements									
+							System.out.println("current array pair " + receptorArray[k][1] + " and " + receptorArray[k][2] + " matches random " + jRandReplaceRow + " and " + jRandReplaceCol);
+							System.out.println("redo random numbers");
+						
+							jRandReplaceRow = jRow();
+							jRandReplaceCol = jCol();
+							k--;
+							}
+							else{
+								System.out.println("current array pair " + receptorArray[k][1] + " and " + receptorArray[k][2] + " doesn't match random " + jRandReplaceRow + " and " + jRandReplaceCol);
+								
+								checkCount++;
+								System.out.println("CheckCount: " + checkCount);
+									if(checkCount == receptorArray.length){
+										receptorArray[j][1] = jRandReplaceRow;
+										receptorArray[j][2] = jRandReplaceCol;
+										 System.out.println("new receptor array is " + Arrays.deepToString(receptorArray));
+									}
+							}
+						
+						
+						}//k loop end
+						
+				 }
+				 else{ 
+					continue;
+				 }
+			 }
+		 }
+		
+	
+  }
+	 public static int jRow(){
+		 Random randCheck = new Random();
+		 int jRandRow = randCheck.nextInt(height);
+		 
+		 return jRandRow;
+	 }
+	 
+	 public static int jCol(){
+		 Random randCheck = new Random();
+		 int jRandCol = randCheck.nextInt(width);
+		 
+		 return jRandCol;
+	 }
+	 public static synchronized void movementArray(){
+		 Random rand = new Random();
+				 
+			for(int i = 0; i <= moveArray.length - 1; i++){
+				 int randMove = rand.nextInt(2);
+				 int randDir = rand.nextInt(2);
+				// System.out.println("randMove is: " + randMove);
+					 
+				 if(randMove == 0){//row change
+					if(randDir == 0){//negative value
+						
+					 moveArray[i][1] = -stepSize;  
+					}
+					if(randDir == 1){//positive value
+					  moveArray[i][1] = stepSize;
+					}
+				 }
+				 if(randMove == 1){//column change
+					 if(randDir == 0){//negative value
+						
+					 moveArray[i][2] = -stepSize;
+					 }
+					 if(randDir == 1){//positive value
+					 moveArray[i][2] = stepSize;
+					 }
+				 }
+		}
+			
+//control number of steps added to moveArray until moveArray is added to receptorArray	
+		for(int k = 0; k < steps; k++){  
+			for(int i = 0; i <= stepArray.length - 1; i++){
+				 int randSwitch =rand.nextInt(switchActive);
+				 int randMove = rand.nextInt(2);
+				 int randDir = rand.nextInt(2);
+				 //System.out.println("randMove is: " + randMove);
+					 
+				 if(randMove == 0){//row change
+					if(randDir == 0){//negative value
+						
+					  stepArray[i][1] = -stepSize;  
+					}
+					if(randDir == 1){//positive value
+					  stepArray[i][1] = stepSize;
+					}
+				 }
+				 if(randMove == 1){//column change
+					 if(randDir == 0){//negative value
+						
+					 stepArray[i][2] = -stepSize;
+					 }
+					 if(randDir == 1){//positive value
+					 stepArray[i][2] = stepSize;
+					 }
+				 }
+			
+		}
+		//System.out.println("Movement array BEFORE step addition is: ");
+		//System.out.println(Arrays.deepToString(moveArray));
+		System.out.println("Step array is: ");
+		System.out.println(Arrays.deepToString(stepArray));
+		
+		for(int i = 0; i <= moveArray.length - 1; i++){
+			moveArray[i][1] = moveArray[i][1] + stepArray[i][1];
+			moveArray[i][2] = moveArray[i][2] + stepArray[i][2];
+			
+		}
+		
+		for(int i = 0; i < stepArray.length; i++){
+			Arrays.fill(stepArray[i], '\0');
+		}
+		//System.out.println("Movement array AFTER step addition is: ");
+		//System.out.println(Arrays.deepToString(moveArray));
+		//System.out.println("cleared step array is: " + Arrays.deepToString(stepArray));
+		
+	 }
+ }
+
+	 public static synchronized void addArrays(){
+		 for (int i = 0; i <= moveArray.length - 1; i++){
+			 
+			 receptorArray[i][1] = receptorArray[i][1] + moveArray[i][1];
+			 receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
+		
+			 //Boundary checking
+			 if(receptorArray[i][1] < 0){
+				 receptorArray[i][1] = 0;
+			 }
+			 if(receptorArray[i][1] > height){
+				 receptorArray[i][1] = height;
+			 }
+			 if(receptorArray[i][2] < 0){
+				 receptorArray[i][2] = 0;
+			 }
+			 if(receptorArray[i][2] > width){
+				 receptorArray[i][2] = width;
+			 }
+		 }
+		 System.out.println("AAAAAAAAAAAAAAAAAAAAAAAA  AFTER BOUND CHECK new receptor array is: ");
+		 System.out.println(Arrays.deepToString(receptorArray));
+	 }
+	 
+	 public static synchronized void eventCheck(){
+		 
+		 Random rand = new Random();
+		 
+		 for(int i = 0; i <= receptorArray.length - 1; i++){
+			 for(int j = 0; j <= receptorArray.length - 1; j++){
+				 
+				 if(receptorArray[i][0] == 1.0f && receptorArray[j][0]== 1.0f && receptorArray[i][1] == receptorArray[j][1] && receptorArray[i][2] == receptorArray[j][2] && i != j){
+					 
+					 
+					 eventArray.add(receptorArray[j][1]);
+					 eventArray.add(receptorArray[j][2]);
+					 
+					 //Replace matching positions with new positions
+					    int iRandReceptor = rand.nextInt(2); 
+						int iRandRow = rand.nextInt(height);
+						int iRandCol = rand.nextInt(width);
+					
+						receptorArray[i][0] = iRandReceptor;
+						receptorArray[i][1] = iRandRow;
+						receptorArray[i][2] = iRandCol;	
+						
+						int jRandReceptor = rand.nextInt(2);
+						int jRandRow = rand.nextInt(height);
+						int jRandCol = rand.nextInt(width);
+						
+						receptorArray[j][0] = jRandReceptor;
+						receptorArray[j][1] = jRandRow;
+						receptorArray[j][2] = jRandCol;
+										 
+				 }
+			 }		 
+		 }
+		 System.out.println("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW EVENT ARRAY IS: "+eventArray);
+		 
+	
+		 
+	 }
+}//Diffusion class end
