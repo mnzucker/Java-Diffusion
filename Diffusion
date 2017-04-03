@@ -21,9 +21,9 @@ static final int nReceptors = 3 ; //should not exceed height*width
 static final float[][] receptorArray = new float[nReceptors][3];
 static final float[][] moveArray = new float[nReceptors][3];
 static final float[][] stepArray = new float[nReceptors][3];
-static final int switchActive = 5;
-static final int switchInactive = 10 - switchActive;
-
+//switchActive and SwitchInactive are independent probabilities
+static final int switchActive = 90;  
+static final int switchInactive = 20; 
 
 static ArrayList<Float> eventArray = new ArrayList<Float>();
 
@@ -231,6 +231,7 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
 		 
 		 return jRandCol;
 	 }
+	
 	 public static synchronized void movementArray(){
 		 Random rand = new Random();
 				 
@@ -238,23 +239,103 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
 				 int randMove = rand.nextInt(2);
 				 int randDir = rand.nextInt(2);
 				// System.out.println("randMove is: " + randMove);
-					 
+				 
+				 
 				 if(randMove == 0){//row change
-					if(randDir == 0){//negative value
-						
+					if(randDir == 0){//negative value	
 					 moveArray[i][1] = -stepSize;  
+					 	
+					 	if(moveArray[i][0] == 0.0f){  //if receptor is inactive
+							int randSwitchActive = rand.nextInt(100);
+							if(randSwitchActive < switchActive){
+								moveArray[i][0] = 1.0f;  //switch to active
+							}
+							else{
+								continue;
+							}
+					 	}
+						if(moveArray[i][0] == 1.0f){   //if receptor is active
+								 int randSwitchInactive = rand.nextInt(100); //0 to 99
+								 if(randSwitchInactive < switchInactive){
+									 moveArray[i][0] = 0.0f;
+								 }
+								 else{
+									 continue;
+								 }
+					 	}			
 					}
+				 
 					if(randDir == 1){//positive value
 					  moveArray[i][1] = stepSize;
+					  
+					  if(moveArray[i][0]== 0.0f){  //if receptor is inactive
+							int randSwitchActive = rand.nextInt(100);
+							if(randSwitchActive < switchActive){
+								moveArray[i][0] = 1.0f;  //switch to active
+							}
+							else{
+								continue;
+							}
+						}
+						 
+						 if(moveArray[i][0] == 1.0f){   //if receptor is active
+							 int randSwitchInactive = rand.nextInt(100); //0 to 99
+							 if(randSwitchInactive < switchInactive){
+								 moveArray[i][0] = 0.0f;
+							 }
+							 else{
+								 continue;
+							 }
+						 }
 					}
 				 }
+	 
 				 if(randMove == 1){//column change
-					 if(randDir == 0){//negative value
-						
+					 if(randDir == 0){//negative value	
 					 moveArray[i][2] = -stepSize;
+					 
+					 	if(moveArray[i][0]== 0.0f){  //if receptor is inactive
+							int randSwitchActive = rand.nextInt(100);
+							if(randSwitchActive < switchActive){
+								moveArray[i][0] = 1.0f;  //switch to active
+							}
+							else{
+								continue;
+							}
+						}
+						 
+						 if(moveArray[i][0] == 1.0f){   //if receptor is active
+							 int randSwitchInactive = rand.nextInt(100); //0 to 99
+							 if(randSwitchInactive < switchInactive){
+								 moveArray[i][0] = 0.0f;
+							 }
+							 else{
+								 continue;
+							 }
+						 }
 					 }
 					 if(randDir == 1){//positive value
 					 moveArray[i][2] = stepSize;
+					 
+					 	if(moveArray[i][0]== 0.0f){  //if receptor is inactive
+							int randSwitchActive = rand.nextInt(100);
+							if(randSwitchActive < switchActive){
+								moveArray[i][0] = 1.0f;  //switch to active
+							}
+							else{
+								continue;
+							}
+						}
+						 
+						 if(moveArray[i][0] == 1.0f){   //if receptor is active
+							 int randSwitchInactive = rand.nextInt(100); //0 to 99
+							 if(randSwitchInactive < switchInactive){
+								 moveArray[i][0] = 0.0f;
+							 }
+							 else{
+								 continue;
+							 }
+						 }
 					 }
 				 }
 		}
@@ -262,27 +343,106 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
 //control number of steps added to moveArray until moveArray is added to receptorArray	
 		for(int k = 0; k < steps; k++){  
 			for(int i = 0; i <= stepArray.length - 1; i++){
-				 int randSwitch =rand.nextInt(switchActive);
+				
 				 int randMove = rand.nextInt(2);
 				 int randDir = rand.nextInt(2);
 				 //System.out.println("randMove is: " + randMove);
-					 
+				
+						 
 				 if(randMove == 0){//row change
-					if(randDir == 0){//negative value
-						
+					if(randDir == 0){//negative value		
 					  stepArray[i][1] = -stepSize;  
+					  
+					  if(stepArray[i][0]== 0.0f){  //if receptor is inactive
+							int randSwitchActive = rand.nextInt(100);
+							if(randSwitchActive < switchActive){
+								stepArray[i][0] = 1.0f;  //switch to active
+							}
+							else{
+								continue;
+							}
+						}
+						 
+					  if(stepArray[i][0] == 1.0f){   //if receptor is active
+							 int randSwitchInactive = rand.nextInt(100); //0 to 99
+							 if(randSwitchInactive < switchInactive){
+								 stepArray[i][0] = 0.0f;
+							 }
+							 else{
+								 continue;
+							 }
+						 }
 					}
 					if(randDir == 1){//positive value
 					  stepArray[i][1] = stepSize;
+					  
+					  if(stepArray[i][0]== 0.0f){  //if receptor is inactive
+							int randSwitchActive = rand.nextInt(100);
+							if(randSwitchActive < switchActive){
+								stepArray[i][0] = 1.0f;  //switch to active
+							}
+							else{
+								continue;
+							}
+						}
+						 
+					  if(stepArray[i][0] == 1.0f){   //if receptor is active
+							 int randSwitchInactive = rand.nextInt(100); //0 to 99
+							 if(randSwitchInactive < switchInactive){
+								 stepArray[i][0] = 0.0f;
+							 }
+							 else{
+								 continue;
+							 }
+						 }
 					}
 				 }
 				 if(randMove == 1){//column change
-					 if(randDir == 0){//negative value
-						
+					 if(randDir == 0){//negative value			
 					 stepArray[i][2] = -stepSize;
+					 
+					 	if(stepArray[i][0]== 0.0f){  //if receptor is inactive
+							int randSwitchActive = rand.nextInt(100);
+							if(randSwitchActive < switchActive){
+								stepArray[i][0] = 1.0f;  //switch to active
+							}
+							else{
+								continue;
+							}
+						}
+						 
+						if(stepArray[i][0] == 1.0f){   //if receptor is active
+							 int randSwitchInactive = rand.nextInt(100); //0 to 99
+							 if(randSwitchInactive < switchInactive){
+								 stepArray[i][0] = 0.0f;
+							 }
+							 else{
+								 continue;
+							 }
+						 }
 					 }
 					 if(randDir == 1){//positive value
 					 stepArray[i][2] = stepSize;
+					 
+					 	if(stepArray[i][0]== 0.0f){  //if receptor is inactive
+							int randSwitchActive = rand.nextInt(100);
+							if(randSwitchActive < switchActive){
+								stepArray[i][0] = 1.0f;  //switch to active
+							}
+							else{
+								continue;
+							}
+						}
+						 
+						 if(stepArray[i][0] == 1.0f){   //if receptor is active
+							 int randSwitchInactive = rand.nextInt(100); //0 to 99
+							 if(randSwitchInactive < switchInactive){
+								 stepArray[i][0] = 0.0f;
+							 }
+							 else{
+								 continue;
+							 }
+						 }
 					 }
 				 }
 			
@@ -293,6 +453,10 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
 		System.out.println(Arrays.deepToString(stepArray));
 		
 		for(int i = 0; i <= moveArray.length - 1; i++){
+			//moveArray is first step
+			//switch if initial state in moveArray not equal to new state in stepArray
+			
+			moveArray[i][0] = stepArray[i][0];
 			moveArray[i][1] = moveArray[i][1] + stepArray[i][1];
 			moveArray[i][2] = moveArray[i][2] + stepArray[i][2];
 			
@@ -310,7 +474,7 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
 
 	 public static synchronized void addArrays(){
 		 for (int i = 0; i <= moveArray.length - 1; i++){
-			 
+			 receptorArray[i][0] = moveArray[i][0];
 			 receptorArray[i][1] = receptorArray[i][1] + moveArray[i][1];
 			 receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
 		
