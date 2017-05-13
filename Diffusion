@@ -10,22 +10,37 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
+import ij.gui.Plot;
+import java.math.*;
 
 public class Diffusion {
-static final int height = 20;
-static final int width = 20;
-static final int steps = 10; //steps added together before moving
-static final float stepSize = 0.1f;
-static final int move = 5; //move n positions
-static final int nReceptors = 3 ; //should not exceed height*width 
+static final int height = 150;
+static final int width = 150;
+static final int steps = 1; //steps added together before moving
+static final float stepSize = 1f;
+static final int move = 3; //move n positions
+static final int nReceptors = 3; //should not exceed height*width 
 static final float[][] receptorArray = new float[nReceptors][3];
 static final float[][] moveArray = new float[nReceptors][3];
 static final float[][] stepArray = new float[nReceptors][3];
+
+static float xElements = 0f;
+static float yElements = 0f;
+//static ArrayList<Float> xInnerArray = new ArrayList<Float>();
+//static ArrayList<Float> yInnerArray = new ArrayList<Float>();
+static ArrayList<Float> xArray = new ArrayList<Float>();
+static ArrayList<Float> yArray = new ArrayList<Float>();
+
+static final float kOn = 0.003f;  //micromolar^-1 * nanosecond ^-1
+static final float kOff = 0.04f;  //nanosecond^-1
+static final float timeStep = 0.0005f; //nanosecond^-1
 //switchActive and SwitchInactive are independent probabilities
+// switchActive = kOn*timeStep
 static final int switchActive = 90;  
 static final int switchInactive = 20; 
 
 static ArrayList<Float> eventArray = new ArrayList<Float>();
+static int events = 0;
 
 	public static void main(String args[]) throws IOException{
 		
@@ -67,7 +82,7 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
 					e1.printStackTrace();
 				}
 				int recCheck = 0;
-				for(int i = 0; i <= move; i++){  //move i times
+				for(int i = 0; i <= move - 1; i++){  //move i times
 									
 						movementArray();	
 					
@@ -119,13 +134,16 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
 						//eventCheck();
 									
 			}
-		
+				
+				//System.out.println("yArray is: "+yArray);
 				try {
 					fileOS.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				
+				plotTrajectory();
 				
 				long endTime2 =  System.currentTimeMillis();
 				long totalTime2 = endTime2 - startTime2;
@@ -449,8 +467,8 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
 		}
 		//System.out.println("Movement array BEFORE step addition is: ");
 		//System.out.println(Arrays.deepToString(moveArray));
-		System.out.println("Step array is: ");
-		System.out.println(Arrays.deepToString(stepArray));
+		//System.out.println("Step array is: ");
+		//System.out.println(Arrays.deepToString(stepArray));
 		
 		for(int i = 0; i <= moveArray.length - 1; i++){
 			//moveArray is first step
@@ -473,27 +491,59 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
  }
 
 	 public static synchronized void addArrays(){
+		 
+			 
+		 
 		 for (int i = 0; i <= moveArray.length - 1; i++){
+			 
+			 //create a new ArrayList for each receptor
+			  ArrayList<Float> xInnerArray = new ArrayList<Float>();
+			  ArrayList<Float> yInnerArray = new ArrayList<Float>();
+			  
 			 receptorArray[i][0] = moveArray[i][0];
+			 
 			 receptorArray[i][1] = receptorArray[i][1] + moveArray[i][1];
-			 receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
-		
 			 //Boundary checking
 			 if(receptorArray[i][1] < 0){
 				 receptorArray[i][1] = 0;
 			 }
-			 if(receptorArray[i][1] > height){
+			 else if(receptorArray[i][1] > height){
 				 receptorArray[i][1] = height;
 			 }
+			 	 
+			 receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
+			 //Boundary checking		
 			 if(receptorArray[i][2] < 0){
 				 receptorArray[i][2] = 0;
 			 }
-			 if(receptorArray[i][2] > width){
+			 else if(receptorArray[i][2] > width){
 				 receptorArray[i][2] = width;
 			 }
+			 xElements = receptorArray[i][1];
+			 yElements = receptorArray[i][2];
+			// System.out.println("moveArray size: "+(moveArray.length-1));
+			//System.out.println("xElement: "+xElements);
+			
+			 //xInnerArray.add(xElements);
+			// yInnerArray.add(yElements);
+					 
+			 xArray.add(xElements);
+			 yArray.add(yElements);
+			
+			 // System.out.println("xArray is: ");
+			// System.out.println(xArray);
+			
 		 }
-		 System.out.println("AAAAAAAAAAAAAAAAAAAAAAAA  AFTER BOUND CHECK new receptor array is: ");
-		 System.out.println(Arrays.deepToString(receptorArray));
+		 
+		
+		// System.out.println("AAAAAAAAAAAAAAAAAAAAAAAA  AFTER BOUND CHECK new receptor array is: ");
+		// System.out.println(Arrays.deepToString(receptorArray));
+		// System.out.println("xArray is: ");
+		// System.out.println(xArray);
+		// System.out.println("yArray is: ");
+		// System.out.println(yArray);
+		 
+	
 	 }
 	 
 	 public static synchronized void eventCheck(){
@@ -505,6 +555,7 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
 				 
 				 if(receptorArray[i][0] == 1.0f && receptorArray[j][0]== 1.0f && receptorArray[i][1] == receptorArray[j][1] && receptorArray[i][2] == receptorArray[j][2] && i != j){
 					 
+					 events++;
 					 
 					 eventArray.add(receptorArray[j][1]);
 					 eventArray.add(receptorArray[j][2]);
@@ -530,8 +581,151 @@ static ArrayList<Float> eventArray = new ArrayList<Float>();
 			 }		 
 		 }
 		 System.out.println("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW EVENT ARRAY IS: "+eventArray);
+		 System.out.println("Number of Events: "+events);
 		 
 	
+	 }
+	 public static void plotTrajectory(){
 		 
+		 ArrayList<ArrayList<Float>> yFinalArray = new ArrayList<ArrayList<Float>>();
+		 ArrayList<ArrayList<Float>> xFinalArray = new ArrayList<ArrayList<Float>>();
+		
+//		 System.out.println("nReceptors: "+nReceptors);
+//		 System.out.println("move: "+move);
+//		 System.out.println("xArray is: "+xArray);
+//		 System.out.println("xArray.size(): "+xArray.size());
+//		 System.out.println("yArray is: "+yArray);
+//		 System.out.println("yArray.size(): "+yArray.size());
+		 
+		 int a = 1;
+		 
+	
+		 if((xArray.size())%2 == 0){
+		 	for(int i = 0; i <= nReceptors - 1; i++){
+		 		
+		 		//create new array for each ith set of positions
+		 		 ArrayList<Float> xFinalInnerArray = new ArrayList<Float>(); 
+		 		ArrayList<Float> yFinalInnerArray = new ArrayList<Float>(); 
+		 		for(int j = 0 + i; j <= xArray.size() - 1; j+= nReceptors){
+				 
+		 			//System.out.println("even");
+		 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j + " i = "+i);
+		 			
+		 			xFinalInnerArray.add(xArray.get(j));
+		 			yFinalInnerArray.add(yArray.get(j));
+		 			
+		 		}
+		 	//System.out.println("xFinalInnerArray: " +xFinalInnerArray);
+		 	//System.out.println("yFinalInnerArray: "+yFinalInnerArray);
+		 	xFinalArray.add(xFinalInnerArray);
+		 	yFinalArray.add(yFinalInnerArray);
+		 	//System.out.println("xFinalArray: "+xFinalArray);
+		 	//System.out.println("yFinalArray: "+yFinalArray);
+		 	}
+		 }
+		 else{
+			 for(int i = 0; i <= nReceptors - 1; i++){
+				 
+				//create new array for each ith set of positions
+		 		 ArrayList<Float> xFinalInnerArray = new ArrayList<Float>(); 
+		 		 ArrayList<Float> yFinalInnerArray = new ArrayList<Float>(); 
+		 		 
+			 		for(int j = 0 + i; j <= (xArray.size() - (nReceptors - a )); j+= nReceptors){
+					 
+			 			//System.out.println("odd");
+			 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j+ " i = "+i);
+			 			
+			 			xFinalInnerArray.add(xArray.get(j));
+			 			yFinalInnerArray.add(yArray.get(j));
+					
+				 }
+			 		//System.out.println("a: "+a);
+			 		a++;
+			 		//System.out.println("xFinalInnerArray:" +xFinalInnerArray);
+				 	xFinalArray.add(xFinalInnerArray);
+				 	yFinalArray.add(yFinalInnerArray);
+				 	//System.out.println("xFinalArray: "+xFinalArray);
+				 	//System.out.println("yFinalArray: "+yFinalArray);
+			 }
+		 }
+		System.out.println("xFinalArray: "+xFinalArray);
+		System.out.println("yFinalArray: "+yFinalArray);
+		
+		
+		//for(int j = 0; j <=) 
+//		 for(int i = 0; i <= xArray.size() - 1; i++){
+//		 
+//			 Float xF = xArray.get(i).get(0);
+//		System.out.println("xF: "+xF);
+//		xFinalInnerArray.add(xF);
+//		System.out.println("xFinalInnerArray: "+xFinalInnerArray);
+//		
+//		xFinalArray.add(xFinalInnerArray);
+		
+//		 }
+		 
+//		 for(int i = 0; i<=xArray.size() - 1; i++){
+//		 xFinalArray.add(xArray.get(i));
+//		 }
+		 
+		// System.out.println("xFinalArray: "+xFinalArray);
+		
+		 
+		 //System.out.println("plot method xArray: "+xArray);
+		 
+		 float[][] xPlot = new float[nReceptors][move + 1];
+		 float[][] yPlot = new float[nReceptors][move + 1];
+		 	
+		 	
+			
+		
+		// ArrayList<Float> xInner = xArray.get(0);
+		// Float xEl = xInner.get(0);
+		// System.out.println("xArray.get(0): "+xArray.get(0));
+		// System.out.println("xEl: "+xEl);
+		// System.out.println("xArray.size(): "+xArray.size());
+		 
+	//	 Float[] xO = xArray.toArray(new Float[xArray.size()]);
+ 
+	//	 Float[] yO = yArray.toArray(new Float[yArray.size()]);
+
+		 
+
+// for(int i = 0; i <= nReceptors - 1; i++){
+// 	for( int j = 0; j <= xO.length - 1; j++ ){
+//	
+// 		float xP = xO[j].floatValue();
+// 		xPlot[i][j] = xP;
+//}
+// }
+// for(int i = 0; i <= nReceptors - 1; i++){
+// 	for( int j = 0; j <= yO.length - 1; j++ ){
+//	
+// 		float yP = yO[j].floatValue();
+// 		yPlot[i][j] = yP;	
+// 	}
+//}
+//for(int i = 0 ; i<=xPlot.length - 1; i++ ){
+//	//System.out.println("X values: "+xPlot[i]);
+//}
+//for(int i = 0 ; i<=yPlot.length - 1; i++ ){
+//	//System.out.println("Y values: "+yPlot[i]);
+//}
+
+
+//System.out.println("plot method");
+
+
+//		 Plot testPlot = new Plot("test plot","X axis","Y axis",xPlot[0],yPlot[0]);
+//		
+//		 testPlot.setLineWidth(2);
+//		 float[] xPlot2 = {20f,30f,40f};
+//		 float[] yPlot2 = {90f,40f,80f};
+//		 testPlot.addPoints(xPlot2,yPlot2,2);
+//		
+//		 	testPlot.setLimits(0, height + 50, 0, width + 50); //x1,x2,y1,y2
+//		 	testPlot.setLineWidth(2);
+//
+//		 	testPlot.show();
 	 }
 }//Diffusion class end
