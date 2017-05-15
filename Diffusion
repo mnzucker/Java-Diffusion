@@ -16,28 +16,25 @@ import java.math.*;
 public class Diffusion {
 static final int height = 150;
 static final int width = 150;
-static final int steps = 1; //steps added together before moving
-static final float stepSize = 1f;
-static final int move = 3; //move n positions
-static final int nReceptors = 3; //should not exceed height*width 
+static final int steps = 10; //steps added together before moving
+static final float stepSize = 0.1f;
+static final int move = 10; //move n positions
+static final int nReceptors = 1; //should not exceed height*width 
 static final float[][] receptorArray = new float[nReceptors][3];
 static final float[][] moveArray = new float[nReceptors][3];
 static final float[][] stepArray = new float[nReceptors][3];
 
 static float xElements = 0f;
 static float yElements = 0f;
-//static ArrayList<Float> xInnerArray = new ArrayList<Float>();
-//static ArrayList<Float> yInnerArray = new ArrayList<Float>();
+
 static ArrayList<Float> xArray = new ArrayList<Float>();
 static ArrayList<Float> yArray = new ArrayList<Float>();
 
-static final float kOn = 0.003f;  //micromolar^-1 * nanosecond ^-1
-static final float kOff = 0.04f;  //nanosecond^-1
-static final float timeStep = 0.0005f; //nanosecond^-1
+static final float kOn = 0.005f;  
+static final float kOff = 0.0005f;  
+static final float timeStep = 1.0f; 
 //switchActive and SwitchInactive are independent probabilities
-// switchActive = kOn*timeStep
-static final int switchActive = 90;  
-static final int switchInactive = 20; 
+
 
 static ArrayList<Float> eventArray = new ArrayList<Float>();
 static int events = 0;
@@ -49,7 +46,9 @@ static int events = 0;
 			@Override
 			public void run(){
 				long startTime1 =  System.currentTimeMillis();
-			
+				
+				
+				
 				initialArray();
 			
 				checkArray();
@@ -143,7 +142,7 @@ static int events = 0;
 					e.printStackTrace();
 				}
 				
-				plotTrajectory();
+				//plotTrajectory();
 				
 				long endTime2 =  System.currentTimeMillis();
 				long totalTime2 = endTime2 - startTime2;
@@ -250,6 +249,78 @@ static int events = 0;
 		 return jRandCol;
 	 }
 	
+	 public static boolean switchActive(){
+		 
+		 //increase concentration as variable with for loop later
+		 float concentration = 1;
+		 float pOn = kOn*concentration*timeStep*100;
+			 
+		
+		 
+		 //System.out.println("pOn: "+pOn);
+		 
+		 String strFloat = String.valueOf(pOn);
+		 //System.out.println("strFloat: "+strFloat);
+		 
+		 int count = strFloat.indexOf('.');
+		 //System.out.println("index of decimal: "+count);
+		 
+		 int decimalPlaces = strFloat.length() - count - 1;
+		 //System.out.println("number of decimal places: "+decimalPlaces);
+		 
+		 float multiplier =  (float) Math.pow(10,decimalPlaces);
+		 
+		 //System.out.println("multiplier: "+multiplier);
+		// System.out.println(pOn*multiplier+" / "+100*multiplier);
+		// float aFraction = (a*multiplier)/(100*multiplier);
+		 
+		Random randActive = new Random();
+		
+		float switchOn = randActive.nextInt((int) (100*multiplier));	 
+		//System.out.println("random number is: "+switchOn);
+		 
+		 if(switchOn < pOn*multiplier){
+		 return true;
+		 }
+		 else{
+		return false;
+		 }
+	 }
+	 
+	 public static boolean switchInactive(){
+		 
+		 float pOff = kOff*timeStep*100;
+		 //System.out.println("pOff: "+pOff);
+		 
+		 String strFloat = String.valueOf(pOff);
+		 //System.out.println("strFloat: "+strFloat);
+		 
+		 int count = strFloat.indexOf('.');
+		 //System.out.println("index of decimal: "+count);
+		 
+		 int decimalPlaces = strFloat.length() - count - 1;
+		 //System.out.println("number of decimal places: "+decimalPlaces);
+		 
+		 float multiplier =  (float) Math.pow(10,decimalPlaces);
+		 
+		 //System.out.println("multiplier: "+multiplier);
+		 //System.out.println(pOff*multiplier+" / "+100*multiplier);
+		// float aFraction = (a*multiplier)/(100*multiplier);
+		 
+		Random randInactive = new Random();
+		
+		float switchOff = randInactive.nextInt((int) (100*multiplier));	 
+		//System.out.println("random number is: "+switchOff);
+		 
+		 if(switchOff < pOff*multiplier){
+		 return true;
+		 }
+		 else{
+		return false;
+		 }
+	 }
+	 
+	 
 	 public static synchronized void movementArray(){
 		 Random rand = new Random();
 				 
@@ -264,8 +335,9 @@ static int events = 0;
 					 moveArray[i][1] = -stepSize;  
 					 	
 					 	if(moveArray[i][0] == 0.0f){  //if receptor is inactive
-							int randSwitchActive = rand.nextInt(100);
-							if(randSwitchActive < switchActive){
+					 		boolean on = switchActive();
+							
+							if(on == true){
 								moveArray[i][0] = 1.0f;  //switch to active
 							}
 							else{
@@ -273,8 +345,9 @@ static int events = 0;
 							}
 					 	}
 						if(moveArray[i][0] == 1.0f){   //if receptor is active
-								 int randSwitchInactive = rand.nextInt(100); //0 to 99
-								 if(randSwitchInactive < switchInactive){
+							
+							boolean off = switchInactive();
+							if(off == true){
 									 moveArray[i][0] = 0.0f;
 								 }
 								 else{
@@ -287,8 +360,8 @@ static int events = 0;
 					  moveArray[i][1] = stepSize;
 					  
 					  if(moveArray[i][0]== 0.0f){  //if receptor is inactive
-							int randSwitchActive = rand.nextInt(100);
-							if(randSwitchActive < switchActive){
+						  boolean on = switchActive();
+							if(on == true){
 								moveArray[i][0] = 1.0f;  //switch to active
 							}
 							else{
@@ -297,8 +370,8 @@ static int events = 0;
 						}
 						 
 						 if(moveArray[i][0] == 1.0f){   //if receptor is active
-							 int randSwitchInactive = rand.nextInt(100); //0 to 99
-							 if(randSwitchInactive < switchInactive){
+							 boolean off = switchInactive(); //0 to 99
+							 if(off == true){
 								 moveArray[i][0] = 0.0f;
 							 }
 							 else{
@@ -313,8 +386,8 @@ static int events = 0;
 					 moveArray[i][2] = -stepSize;
 					 
 					 	if(moveArray[i][0]== 0.0f){  //if receptor is inactive
-							int randSwitchActive = rand.nextInt(100);
-							if(randSwitchActive < switchActive){
+							boolean on = switchActive();
+							if(on == true){
 								moveArray[i][0] = 1.0f;  //switch to active
 							}
 							else{
@@ -323,8 +396,8 @@ static int events = 0;
 						}
 						 
 						 if(moveArray[i][0] == 1.0f){   //if receptor is active
-							 int randSwitchInactive = rand.nextInt(100); //0 to 99
-							 if(randSwitchInactive < switchInactive){
+							 boolean off = switchInactive(); //0 to 99
+							 if(off == true){
 								 moveArray[i][0] = 0.0f;
 							 }
 							 else{
@@ -336,8 +409,8 @@ static int events = 0;
 					 moveArray[i][2] = stepSize;
 					 
 					 	if(moveArray[i][0]== 0.0f){  //if receptor is inactive
-							int randSwitchActive = rand.nextInt(100);
-							if(randSwitchActive < switchActive){
+							boolean on = switchActive();
+							if(on == true){
 								moveArray[i][0] = 1.0f;  //switch to active
 							}
 							else{
@@ -346,8 +419,8 @@ static int events = 0;
 						}
 						 
 						 if(moveArray[i][0] == 1.0f){   //if receptor is active
-							 int randSwitchInactive = rand.nextInt(100); //0 to 99
-							 if(randSwitchInactive < switchInactive){
+							 boolean off = switchInactive(); //0 to 99
+							 if(off == true){
 								 moveArray[i][0] = 0.0f;
 							 }
 							 else{
@@ -359,7 +432,8 @@ static int events = 0;
 		}
 			
 //control number of steps added to moveArray until moveArray is added to receptorArray	
-		for(int k = 0; k < steps; k++){  
+			//steps - 1?  check continue statements
+		for(int k = 0; k < steps ; k++){  
 			for(int i = 0; i <= stepArray.length - 1; i++){
 				
 				 int randMove = rand.nextInt(2);
@@ -372,8 +446,8 @@ static int events = 0;
 					  stepArray[i][1] = -stepSize;  
 					  
 					  if(stepArray[i][0]== 0.0f){  //if receptor is inactive
-							int randSwitchActive = rand.nextInt(100);
-							if(randSwitchActive < switchActive){
+							boolean on = switchActive();
+							if(on == true){
 								stepArray[i][0] = 1.0f;  //switch to active
 							}
 							else{
@@ -382,8 +456,8 @@ static int events = 0;
 						}
 						 
 					  if(stepArray[i][0] == 1.0f){   //if receptor is active
-							 int randSwitchInactive = rand.nextInt(100); //0 to 99
-							 if(randSwitchInactive < switchInactive){
+							 boolean off = switchInactive(); //0 to 99
+							 if(off == true){
 								 stepArray[i][0] = 0.0f;
 							 }
 							 else{
@@ -395,8 +469,8 @@ static int events = 0;
 					  stepArray[i][1] = stepSize;
 					  
 					  if(stepArray[i][0]== 0.0f){  //if receptor is inactive
-							int randSwitchActive = rand.nextInt(100);
-							if(randSwitchActive < switchActive){
+							boolean on = switchActive();
+							if(on == true){
 								stepArray[i][0] = 1.0f;  //switch to active
 							}
 							else{
@@ -405,8 +479,8 @@ static int events = 0;
 						}
 						 
 					  if(stepArray[i][0] == 1.0f){   //if receptor is active
-							 int randSwitchInactive = rand.nextInt(100); //0 to 99
-							 if(randSwitchInactive < switchInactive){
+							 boolean off = switchInactive(); //0 to 99
+							 if(off == true){
 								 stepArray[i][0] = 0.0f;
 							 }
 							 else{
@@ -420,8 +494,8 @@ static int events = 0;
 					 stepArray[i][2] = -stepSize;
 					 
 					 	if(stepArray[i][0]== 0.0f){  //if receptor is inactive
-							int randSwitchActive = rand.nextInt(100);
-							if(randSwitchActive < switchActive){
+							boolean on = switchActive();
+							if(on == true){
 								stepArray[i][0] = 1.0f;  //switch to active
 							}
 							else{
@@ -430,8 +504,8 @@ static int events = 0;
 						}
 						 
 						if(stepArray[i][0] == 1.0f){   //if receptor is active
-							 int randSwitchInactive = rand.nextInt(100); //0 to 99
-							 if(randSwitchInactive < switchInactive){
+							boolean off = switchInactive(); //0 to 99
+							 if(off == true){
 								 stepArray[i][0] = 0.0f;
 							 }
 							 else{
@@ -443,8 +517,8 @@ static int events = 0;
 					 stepArray[i][2] = stepSize;
 					 
 					 	if(stepArray[i][0]== 0.0f){  //if receptor is inactive
-							int randSwitchActive = rand.nextInt(100);
-							if(randSwitchActive < switchActive){
+							boolean on = switchActive();
+							if(on == true){
 								stepArray[i][0] = 1.0f;  //switch to active
 							}
 							else{
@@ -453,8 +527,8 @@ static int events = 0;
 						}
 						 
 						 if(stepArray[i][0] == 1.0f){   //if receptor is active
-							 int randSwitchInactive = rand.nextInt(100); //0 to 99
-							 if(randSwitchInactive < switchInactive){
+							boolean off = switchInactive(); //0 to 99
+							 if(off == true){
 								 stepArray[i][0] = 0.0f;
 							 }
 							 else{
@@ -491,14 +565,10 @@ static int events = 0;
  }
 
 	 public static synchronized void addArrays(){
-		 
-			 
+		 			 
 		 
 		 for (int i = 0; i <= moveArray.length - 1; i++){
 			 
-			 //create a new ArrayList for each receptor
-			  ArrayList<Float> xInnerArray = new ArrayList<Float>();
-			  ArrayList<Float> yInnerArray = new ArrayList<Float>();
 			  
 			 receptorArray[i][0] = moveArray[i][0];
 			 
@@ -521,11 +591,8 @@ static int events = 0;
 			 }
 			 xElements = receptorArray[i][1];
 			 yElements = receptorArray[i][2];
-			// System.out.println("moveArray size: "+(moveArray.length-1));
+			//System.out.println("moveArray size: "+(moveArray.length-1));
 			//System.out.println("xElement: "+xElements);
-			
-			 //xInnerArray.add(xElements);
-			// yInnerArray.add(yElements);
 					 
 			 xArray.add(xElements);
 			 yArray.add(yElements);
@@ -554,6 +621,13 @@ static int events = 0;
 			 for(int j = 0; j <= receptorArray.length - 1; j++){
 				 
 				 if(receptorArray[i][0] == 1.0f && receptorArray[j][0]== 1.0f && receptorArray[i][1] == receptorArray[j][1] && receptorArray[i][2] == receptorArray[j][2] && i != j){
+					 //if there is event, long straight line on plot,
+					 //indicates path between endo receptors and newly generated receptors
+					
+					 
+					 System.out.println("receptor 1 Active: "+receptorArray[i][0]);
+					 System.out.println("receptor 2 Active: "+receptorArray[j][0]);
+					 
 					 
 					 events++;
 					 
@@ -580,7 +654,7 @@ static int events = 0;
 				 }
 			 }		 
 		 }
-		 System.out.println("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW EVENT ARRAY IS: "+eventArray);
+		 System.out.println("EVENT ARRAY IS: "+eventArray);
 		 System.out.println("Number of Events: "+events);
 		 
 	
@@ -589,7 +663,11 @@ static int events = 0;
 		 
 		 ArrayList<ArrayList<Float>> yFinalArray = new ArrayList<ArrayList<Float>>();
 		 ArrayList<ArrayList<Float>> xFinalArray = new ArrayList<ArrayList<Float>>();
-		
+		 float xP = 0f;
+		 float yP = 0f;
+		 float[][] xPlot = new float[nReceptors][move];
+		 float[][] yPlot = new float[nReceptors][move];
+		 
 //		 System.out.println("nReceptors: "+nReceptors);
 //		 System.out.println("move: "+move);
 //		 System.out.println("xArray is: "+xArray);
@@ -604,7 +682,7 @@ static int events = 0;
 		 	for(int i = 0; i <= nReceptors - 1; i++){
 		 		
 		 		//create new array for each ith set of positions
-		 		 ArrayList<Float> xFinalInnerArray = new ArrayList<Float>(); 
+		 		ArrayList<Float> xFinalInnerArray = new ArrayList<Float>(); 
 		 		ArrayList<Float> yFinalInnerArray = new ArrayList<Float>(); 
 		 		for(int j = 0 + i; j <= xArray.size() - 1; j+= nReceptors){
 				 
@@ -648,84 +726,63 @@ static int events = 0;
 				 	//System.out.println("yFinalArray: "+yFinalArray);
 			 }
 		 }
-		System.out.println("xFinalArray: "+xFinalArray);
-		System.out.println("yFinalArray: "+yFinalArray);
+		//System.out.println("xFinalArray: "+xFinalArray);
+		//System.out.println("yFinalArray: "+yFinalArray);
 		
-		
-		//for(int j = 0; j <=) 
-//		 for(int i = 0; i <= xArray.size() - 1; i++){
-//		 
-//			 Float xF = xArray.get(i).get(0);
-//		System.out.println("xF: "+xF);
-//		xFinalInnerArray.add(xF);
-//		System.out.println("xFinalInnerArray: "+xFinalInnerArray);
-//		
-//		xFinalArray.add(xFinalInnerArray);
-		
-//		 }
-		 
-//		 for(int i = 0; i<=xArray.size() - 1; i++){
-//		 xFinalArray.add(xArray.get(i));
-//		 }
-		 
-		// System.out.println("xFinalArray: "+xFinalArray);
-		
-		 
-		 //System.out.println("plot method xArray: "+xArray);
-		 
-		 float[][] xPlot = new float[nReceptors][move + 1];
-		 float[][] yPlot = new float[nReceptors][move + 1];
 		 	
-		 	
+	for(int i = 0; i<=xFinalArray.size() - 1; i++){	 	
+	
+		 Float[] xO = xFinalArray.get(i).toArray(new Float[xFinalArray.size()]);
+		 Float[] yO = yFinalArray.get(i).toArray(new Float[yFinalArray.size()]);
+		 
+		 for(int j = 0; j<=xFinalArray.get(i).size() - 1; j++){
+			 
 			
+			// System.out.println("xO: "+xO[j]);
+			// System.out.println("yO: "+yO[j]);
+			 xP = xO[j].floatValue();
+			 yP = yO[j].floatValue();
+			 
+			 xPlot[i][j] = xP;
+			 yPlot[i][j] = yP;
+			 //System.out.println("xP: "+xP);
+			 //System.out.println("yP: "+yP);
+			 
+		 }
+	}
+
+	//System.out.println(Arrays.deepToString(xPlot));  
+	//System.out.println(Arrays.deepToString(yPlot));
+	
+
+
+
+
+		//System.out.println("R1 first point: "+xPlot[0][1]+" , "+yPlot[0][2]);
 		
-		// ArrayList<Float> xInner = xArray.get(0);
-		// Float xEl = xInner.get(0);
-		// System.out.println("xArray.get(0): "+xArray.get(0));
-		// System.out.println("xEl: "+xEl);
-		// System.out.println("xArray.size(): "+xArray.size());
+		 Plot testPlot = new Plot("test plot","X axis","Y axis",xPlot[0],yPlot[0]);
+		
+			
+		 testPlot.setLimits(0, height + 50, 0, width + 50); //x1,x2,y1,y2
+		//show() pertains to drawing first data set
+		//so set parameters for first data set before testPlot.show()
+		 testPlot.setLineWidth(1);
+		 testPlot.show();  
 		 
-	//	 Float[] xO = xArray.toArray(new Float[xArray.size()]);
- 
-	//	 Float[] yO = yArray.toArray(new Float[yArray.size()]);
-
+		 //additional data sets
+		 //set methods apply to the first data set it encounters
+		 //so put directly before method that draws respective data set
+		
 		 
-
-// for(int i = 0; i <= nReceptors - 1; i++){
-// 	for( int j = 0; j <= xO.length - 1; j++ ){
-//	
-// 		float xP = xO[j].floatValue();
-// 		xPlot[i][j] = xP;
-//}
-// }
-// for(int i = 0; i <= nReceptors - 1; i++){
-// 	for( int j = 0; j <= yO.length - 1; j++ ){
-//	
-// 		float yP = yO[j].floatValue();
-// 		yPlot[i][j] = yP;	
-// 	}
-//}
-//for(int i = 0 ; i<=xPlot.length - 1; i++ ){
-//	//System.out.println("X values: "+xPlot[i]);
-//}
-//for(int i = 0 ; i<=yPlot.length - 1; i++ ){
-//	//System.out.println("Y values: "+yPlot[i]);
-//}
-
-
-//System.out.println("plot method");
-
-
-//		 Plot testPlot = new Plot("test plot","X axis","Y axis",xPlot[0],yPlot[0]);
-//		
-//		 testPlot.setLineWidth(2);
-//		 float[] xPlot2 = {20f,30f,40f};
-//		 float[] yPlot2 = {90f,40f,80f};
-//		 testPlot.addPoints(xPlot2,yPlot2,2);
-//		
-//		 	testPlot.setLimits(0, height + 50, 0, width + 50); //x1,x2,y1,y2
-//		 	testPlot.setLineWidth(2);
-//
-//		 	testPlot.show();
+		 System.out.println(xPlot.length);
+		 System.out.println(nReceptors);
+		 //skip first data set, already plotted (i=1)
+		 for(int i = 1; i<=nReceptors - 1; i++){
+			 
+			testPlot.setLineWidth(1);
+			//testPlot.setColor(Color.BLUE);
+			testPlot.addPoints(xPlot[i],yPlot[i],2); 
+		 }
+	
 	 }
 }//Diffusion class end
