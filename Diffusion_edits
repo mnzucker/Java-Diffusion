@@ -18,7 +18,7 @@ static final int height = 15;
 static final int width = 15;
 static final int steps = 1; //steps added together before moving
 static final float stepSize = 1.0f;
-static final int move = 1; //move n positions
+static final int move = 10; //move n positions
 static final int nReceptors = 1; //should not exceed height*width 
 static final float[][] receptorArray = new float[nReceptors][3];
 static final float[][] moveArray = new float[nReceptors][3];
@@ -86,7 +86,7 @@ static float events = 0;
 				for(int i = 0; i <= move - 1; i++){  //move i times
 									
 						movementArray();	
-						System.out.println(Arrays.deepToString(moveArray));
+						//System.out.println(Arrays.deepToString(moveArray));
 						//System.out.println("move: "+i);
 					
 						addArrays(); 
@@ -142,7 +142,7 @@ static float events = 0;
 						//System.out.println("at time: "+timePoint+" seconds");
 						}
 						
-				//System.out.println("receptorArray: "+Arrays.deepToString(receptorArray));					
+				System.out.println("receptorArray: "+Arrays.deepToString(receptorArray));					
 			}
 				//System.out.println("events: "+events);
 				
@@ -267,7 +267,7 @@ static float events = 0;
 		 float concentration = 1;
 		 float pOn = kOn*concentration*timeStep*100;
 			 
-		 System.out.println("pOn: "+pOn);
+		// System.out.println("pOn: "+pOn);
 		 
 		 String strFloat = String.valueOf(pOn);
 		 //System.out.println("strFloat: "+strFloat);
@@ -281,7 +281,7 @@ static float events = 0;
 		 float multiplier =  (float) Math.pow(10,decimalPlaces);
 		 
 		 //System.out.println("multiplier: "+multiplier);
-		 System.out.println("switchActive(): "+pOn*multiplier+" / "+100*multiplier);
+		 //System.out.println("switchActive(): "+pOn*multiplier+" / "+100*multiplier);
 		// float aFraction = (a*multiplier)/(100*multiplier);
 		 
 		Random randActive = new Random();
@@ -302,7 +302,7 @@ static float events = 0;
 	 public static boolean switchInactive(){
 		 
 		 float pOff = kOff*timeStep*100;
-		 System.out.println("pOff: "+pOff);
+		 //System.out.println("pOff: "+pOff);
 		 
 		 String strFloat = String.valueOf(pOff);
 		 //System.out.println("strFloat: "+strFloat);
@@ -316,7 +316,7 @@ static float events = 0;
 		 float multiplier =  (float) Math.pow(10,decimalPlaces);
 		 
 		 //System.out.println("multiplier: "+multiplier);
-		 System.out.println("switchInactive(): "+pOff*multiplier+" / "+100*multiplier);
+		 //System.out.println("switchInactive(): "+pOff*multiplier+" / "+100*multiplier);
 		 //float aFraction = (pOff*multiplier)/(100*multiplier);
 		 
 		Random randInactive = new Random();
@@ -341,7 +341,9 @@ static float events = 0;
 				 int randMove = rand.nextInt(2);
 				 int randDir = rand.nextInt(2);
 				// System.out.println("randMove is: " + randMove);
-				 
+				 float randState = rand.nextInt((int) (2));
+				 moveArray[i][0] = randState;
+				//System.out.println("Initial moveArray state: "+moveArray[i][0]);
 				 
 				 if(randMove == 0){//row change
 					if(randDir == 0){//negative value	
@@ -354,22 +356,22 @@ static float events = 0;
 								moveArray[i][0] = 1.0f;  //switch to active
 								//System.out.println("switch to ACTIVE");
 							}
-							if(on == false){
+							else if(on == false){
 								moveArray[i][0] = 0.0f;
 								//System.out.println("111stay inactive: "+moveArray[i][0]);
 							}
 					 	}
 					 	else if(moveArray[i][0] == 1.0f){   //if receptor is active
-							System.out.println("currently active: " + moveArray[i][0]);
+							//System.out.println("currently active: " + moveArray[i][0]);
 							boolean off = switchInactive();
 							if(off == true){
 									 moveArray[i][0] = 0.0f;
 									 //System.out.println("switch to INACTIVE");
 								 }
-								 if(off == false){
+							else if(off == false){
 									 moveArray[i][0] = 1.0f;
 									 //System.out.println("stay active: "+moveArray[i][0]);
-								 }
+							}
 					 	}			
 					}
 				 
@@ -382,20 +384,20 @@ static float events = 0;
 								moveArray[i][0] = 1.0f;  //switch to active
 								//System.out.println("switch to ACTIVE");
 							}
-							if(on == false){
+							else if(on == false){
 								moveArray[i][0] = 0.0f;
 								//System.out.println("222stay inactive: "+moveArray[i][0]);
 							}
 						}
 						 
 					  else if(moveArray[i][0] == 1.0f){   //if receptor is active
-						  System.out.println("currently active: "+moveArray[i][0]);
+						  //System.out.println("currently active: "+moveArray[i][0]);
 							 boolean off = switchInactive(); //0 to 99
 							 if(off == true){
 								 moveArray[i][0] = 0.0f;
 								 //System.out.println("switch to INACTIVE");
 							 }
-							 if(off == false){
+							 else if(off == false){
 								 moveArray[i][0] = 1.0f;
 								 //System.out.println("stay active: "+moveArray[i][0]);
 							 }
@@ -413,20 +415,20 @@ static float events = 0;
 								moveArray[i][0] = 1.0f;  //switch to active
 								//System.out.println("switch to ACTIVE");
 							}
-							if(on == false){
+							else if(on == false){
 								moveArray[i][0] = 0.0f;
 								//System.out.println("333stay inactive: "+moveArray[i][0]);
 							}
 						}
 						 
 					 	else if(moveArray[i][0] == 1.0f){   //if receptor is active
-					 		System.out.println("currently active: "+moveArray[i][0]);
+					 		//System.out.println("currently active: "+moveArray[i][0]);
 							 boolean off = switchInactive(); //0 to 99
 							 if(off == true){
 								 moveArray[i][0] = 0.0f;
 								//System.out.println("switch to INACTIVE");
 							 }
-							 if(off == false){
+							 else if(off == false){
 								 moveArray[i][0] = 1.0f;
 								 //System.out.println("stay active: "+moveArray[i][0]);
 							 }
@@ -441,26 +443,27 @@ static float events = 0;
 								moveArray[i][0] = 1.0f;  //switch to active
 								//System.out.println("switch to ACTIVE");
 							}
-							if(on == false){
+							else if(on == false){
 								moveArray[i][0] = 0.0f;
 								//System.out.println("444stay inactive: "+moveArray[i][0]);
 							}
 						}
 						 
 					 	else if(moveArray[i][0] == 1.0f){   //if receptor is active
-					 		System.out.println("currently active: "+moveArray[i][0]);
+					 		//System.out.println("currently active: "+moveArray[i][0]);
 							 boolean off = switchInactive(); //0 to 99
 							 if(off == true){
 								 moveArray[i][0] = 0.0f;
 								 //System.out.println("switch to INACTIVE");
 							 }
-							 if(off == false){
+							 else if(off == false){
 								 moveArray[i][0] = 1.0f;
 								 //System.out.println("stay active: "+moveArray[i][0]);
 							 }
 						 }
 					 }
 				 }
+				 //System.out.println("New moveArray state: "+moveArray[i][0]);
 		}
 			
 //control number of steps added to moveArray until moveArray is added to receptorArray	
@@ -471,7 +474,8 @@ static float events = 0;
 				 int randMove = rand.nextInt(2);
 				 int randDir = rand.nextInt(2);
 				 //System.out.println("randMove is: " + randMove);
-				
+				 float randState = rand.nextInt((int) (2));
+				 stepArray[i][0] = randState;
 						 
 				 if(randMove == 0){//row change
 					if(randDir == 0){//negative value		
@@ -483,20 +487,20 @@ static float events = 0;
 								stepArray[i][0] = 1.0f;  //switch to active
 								//System.out.println("switch to ACTIVE");
 							}
-							if(on == false){
+							else if(on == false){
 								stepArray[i][0] = 0.0f;
 								//System.out.println("555stay inactive: "+stepArray[i][0]);
 							}
 						}
 						 
 					  else if(stepArray[i][0] == 1.0f){   //if receptor is active
-						  System.out.println("currently active: "+stepArray[i][0]);
+						 //System.out.println("currently active: "+stepArray[i][0]);
 							 boolean off = switchInactive(); //0 to 99
 							 if(off == true){
 								 stepArray[i][0] = 0.0f;
 								 //System.out.println("switch to INACTIVE");
 							 }
-							 if(off == false){
+							 else if(off == false){
 								 stepArray[i][0] = 1.0f;
 								 //System.out.println("stay active: "+stepArray[i][0]);
 							 }
@@ -511,20 +515,20 @@ static float events = 0;
 								stepArray[i][0] = 1.0f;  //switch to active
 								//System.out.println("switch to ACTIVE");
 							}
-							if(on == false){
+							else if(on == false){
 								stepArray[i][0] = 0.0f;
 								//System.out.println("666stay inactive: "+stepArray[i][0]);
 							}
 						}
 						 
 					  else if(stepArray[i][0] == 1.0f){   //if receptor is active
-						  System.out.println("currently active: "+stepArray[i][0]);
+						  //System.out.println("currently active: "+stepArray[i][0]);
 							 boolean off = switchInactive(); //0 to 99
 							 if(off == true){
 								 stepArray[i][0] = 0.0f;
 								 //System.out.println("switch to INACTIVE");
 							 }
-							 if(off == false){
+							 else if(off == false){
 								 stepArray[i][0] = 1.0f;
 								 //System.out.println("stay active: "+stepArray[i][0]);
 								 
@@ -542,20 +546,20 @@ static float events = 0;
 								stepArray[i][0] = 1.0f;  //switch to active
 								//System.out.println("switch to ACTIVE");
 							}
-							if (on == false){
+							else if (on == false){
 								stepArray[i][0] = 0.0f;
 								//System.out.println("777stay inactive: "+stepArray[i][0]);
 							}
 						}
 						 
 					 	else if(stepArray[i][0] == 1.0f){   //if receptor is active
-					 		System.out.println("currently active: "+stepArray[i][0]);
+					 		//System.out.println("currently active: "+stepArray[i][0]);
 							boolean off = switchInactive(); //0 to 99
 							 if(off == true){
 								 stepArray[i][0] = 0.0f;
 								//System.out.println("switch to INACTIVE");
 							 }
-							 if(off == false){
+							 else if(off == false){
 								 stepArray[i][0] = 1.0f;
 								 //System.out.println("stay active: "+stepArray[i][0]);
 							 }
@@ -570,20 +574,20 @@ static float events = 0;
 								stepArray[i][0] = 1.0f;  //switch to active
 								//System.out.println("switch to ACTIVE");
 							}
-							if(on == false){
+							else if(on == false){
 								stepArray[i][0] = 0.0f;
 								//System.out.println("888stay inactive: "+stepArray[i][0]);
 							}
 						}
 						 
 					 	else if(stepArray[i][0] == 1.0f){   //if receptor is active
-					 		System.out.println("currently active: "+stepArray[i][0]);
+					 		//System.out.println("currently active: "+stepArray[i][0]);
 							boolean off = switchInactive(); //0 to 99
 							 if(off == true){
 								 stepArray[i][0] = 0.0f;
 								 //System.out.println("switch to INACTIVE");
 							 }
-							 if(off == false){
+							 else if(off == false){
 								 stepArray[i][0] = 1.0f;
 								 //System.out.println("stay active: "+stepArray[i][0]);
 							 }
@@ -848,4 +852,3 @@ static float events = 0;
 	
 	 }
 }//Diffusion class end
-
