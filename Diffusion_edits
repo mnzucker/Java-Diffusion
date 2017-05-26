@@ -19,11 +19,11 @@ static final int height = 150;
 static final int width = 150;
 static final int steps = 1; //steps added together before moving  
 static final float stepSize = 1.0f;
-static final int move = 1000; //move n positions //
+static final int move = 100; //move n positions //
 static final int nReceptors = 1; //should not exceed height*width 
 static final int hopProb = 100; //0 to 100
 static final float concentration = 0.0000000052f; //M     //0.000001f   0.0000000052f
-static final float kOn = 270000.0f;   //M^-1 * s^-1   //270000.0f;  
+static final float kOn = 27000.0f;   //M^-1 * s^-1   //270000.0f;  
 static final float kOff = 0.00014f;  //s^1            //0.00014f; 
 static final float timeStep = 0.00000875f; //0.00000875f seconds 
 static final int eventInterval = 100;  //  interval based on move, not move*steps
@@ -48,6 +48,8 @@ static ArrayList<Float> hopArray = new ArrayList<Float>();
 static ArrayList<Float> hopTimeArray = new ArrayList<Float>();
 static ArrayList<Float> hopXLocationArray = new ArrayList<Float>();
 static ArrayList<Float> hopYLocationArray = new ArrayList<Float>();
+static ArrayList<Float> eventXLocationArray = new ArrayList<Float>();
+static ArrayList<Float> eventYLocationArray = new ArrayList<Float>();
 
 
 static float xElements = 0f;
@@ -203,7 +205,7 @@ static float events = 0;
 							
 							stateArray[j][i] = receptorArray[j][0];
 						}
-			System.out.println("receptorArray: "+Arrays.deepToString(receptorArray));
+			//System.out.println("receptorArray: "+Arrays.deepToString(receptorArray));
 			//System.out.println("stateArray: "+Arrays.deepToString(stateArray));
 			
 			totalTime = i*timeStep;
@@ -241,12 +243,12 @@ static float events = 0;
 				
 /////////////////////////////PLOTS/////////////////////////////////////////////
 				
-				plotTrajectory();
+				//plotTrajectory();
 				//plotEvents();
 				//plotStates();
 				//plotStateChanges();
-				plotHop();
-				System.out.println(switchStateArray);
+				//plotHop();
+				//System.out.println(switchStateArray);
 				long endTime2 =  System.currentTimeMillis();
 				long totalTime2 = endTime2 - startTime2;
 				System.out.println("Current simulation runtime is: "+ totalTime2 +" milliseconds");
@@ -497,6 +499,7 @@ public static void checkHopArray(int row, int col){
 					//System.out.println("moveCount: "+moveCount);
 					//System.out.println("mm: "+mm);
 					//System.out.println("moveArray i: "+i);
+				System.out.println("moveArray beginning of loop: "+Arrays.deepToString(moveArray));
 				 int randMove = rand.nextInt(2);
 				 int randDir = rand.nextInt(2);
 				// System.out.println("randMove is: " + randMove);
@@ -696,7 +699,7 @@ public static void checkHopArray(int row, int col){
 						 }
 					 }
 				 }
-				
+				System.out.println("moveArray after move loop: "+Arrays.deepToString(moveArray));
 				 //System.out.println("New moveArray state: "+moveArray[i][0]);
 				 
 		}///////////////end of moveArray for loop
@@ -923,11 +926,11 @@ public static void checkHopArray(int row, int col){
 						 }
 					 }
 				 }
-			//System.out.println("stepArray inside i loop: "+Arrays.deepToString(stepArray));
+			System.out.println("stepArray inside i loop: "+Arrays.deepToString(stepArray));
 		}////////////////////end of i step for loop
 			
-		//System.out.println("Movement array BEFORE step addition is: ");
-		//System.out.println(Arrays.deepToString(moveArray));
+		System.out.println("Movement array BEFORE step addition is: ");
+		System.out.println(Arrays.deepToString(moveArray));
 		//System.out.println("Step array is: ");
 		//System.out.println(Arrays.deepToString(stepArray));
 		
@@ -947,8 +950,8 @@ public static void checkHopArray(int row, int col){
 		for(int i = 0; i < stepArray.length; i++){
 			Arrays.fill(stepArray[i], '\0');
 		}
-		//System.out.println("Movement array AFTER step addition is: ");
-		//System.out.println(Arrays.deepToString(moveArray));
+		System.out.println("Movement array AFTER step addition is: ");
+		System.out.println(Arrays.deepToString(moveArray));
 		//System.out.println("cleared step array is: " + Arrays.deepToString(stepArray));
 		
 	 }//////////////////////////////end of k step for loop
@@ -979,14 +982,16 @@ public static void checkHopArray(int row, int col){
 		 
 		 for (int i = 0; i <= moveArray.length - 1; i++){
 			 
-		
+			 
 			 
 			  //when receptor hops, replace with new receptor in random location
 			
 			 receptorArray[i][0] = moveArray[i][0];
 			 //System.out.println(moveArray[i][0]);
-			 
+			 System.out.println("receptorArray before addition: "+Arrays.deepToString(receptorArray));
 			 receptorArray[i][1] = receptorArray[i][1] + moveArray[i][1];
+			 receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
+			 System.out.println("receptorArray after addition: "+Arrays.deepToString(receptorArray));
 			 //Boundary checking
 			 if(receptorArray[i][1] < 0){
 				 System.out.println("111before hop x: "+receptorArray[i][1]);
@@ -1039,11 +1044,11 @@ public static void checkHopArray(int row, int col){
 				 }
 			 }
 			 	 
-			 receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
+			 /////////////////receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
 			 //Boundary checking		
 			 if(receptorArray[i][2] < 0){
-				 System.out.println("before hop x: "+receptorArray[i][1]);
-				 System.out.println("before hop y: "+receptorArray[i][2]);
+				 System.out.println("333before hop x: "+receptorArray[i][1]);
+				System.out.println("333before hop y: "+receptorArray[i][2]);
 				 boolean hop = hopProbability();
 				 if(hop == true){  //hop
 					 hopXLocationArray.add(receptorArray[i][1]);
@@ -1079,11 +1084,11 @@ public static void checkHopArray(int row, int col){
 					 RandReplaceRow = jRow();
 					 RandReplaceCol = jCol();
 					 receptorArray[i][0] = 0.0f;
-					receptorArray[i][1] = RandReplaceRow;
-					receptorArray[i][2] = RandReplaceCol;	
+					 receptorArray[i][1] = RandReplaceRow;
+					 receptorArray[i][2] = RandReplaceCol;	
 					 System.out.println("444after hop x: "+receptorArray[i][1]);
 					 System.out.println("444after hop y: "+receptorArray[i][2]);
-					checkHopArray(RandReplaceRow,RandReplaceCol);
+					 checkHopArray(RandReplaceRow,RandReplaceCol);
 					 System.out.println("444after checkHopArray x: "+receptorArray[i][1]);
 					 System.out.println("444after checkHopArray y: "+receptorArray[i][2]);
 				 }
@@ -1101,7 +1106,12 @@ public static void checkHopArray(int row, int col){
 			//System.out.println("hopTimeArray: "+hopTimeArray);
 			 // System.out.println("xArray is: ");
 			// System.out.println(xArray);
-			
+			 
+			 System.out.println("moveArray BEFORE deletion: "+Arrays.deepToString(moveArray));
+			 for(int j = 0; j < moveArray.length; j++){
+					Arrays.fill(moveArray[j], '\0');
+				}
+			 System.out.println("moveArray AFTER deletion: "+Arrays.deepToString(moveArray));
 		 }
 		 
 		//System.out.println("hopXLocationArray"+hopXLocationArray);
@@ -1135,10 +1145,10 @@ public static void checkHopArray(int row, int col){
 					 events++;
 					 //System.out.println("Total number of events: "+events);
 					 
-					 eventArray.add(receptorArray[j][1]);
-					 eventArray.add(receptorArray[j][2]);
+					 eventXLocationArray.add(receptorArray[j][1]);
+					 eventYLocationArray.add(receptorArray[j][2]);
 					 
-					 //Replace matching positions with new positions
+					 //Replace matching positions two new receptors
 					    int iRandReceptor = rand.nextInt(2); 
 						int iRandRow = rand.nextInt(height);
 						int iRandCol = rand.nextInt(width);
@@ -1176,10 +1186,15 @@ public static void checkHopArray(int row, int col){
 		 
 		 float xL = 0.0f;
 		 float yL = 0.0f;
+		 float[] xLocation = new float[hopXLocationArray.size()];
+		 float[] yLocation = new float[hopYLocationArray.size()];
 		 
-		float[] xLocation = new float[hopXLocationArray.size()];
-		float[] yLocation = new float[hopYLocationArray.size()];
-		 
+		 float xE = 0.0f;
+		 float yE = 0.0f;
+		 float[] xEvent = new float[eventXLocationArray.size()];
+		 float[] yEvent = new float[eventYLocationArray.size()];
+		 System.out.println("eventXLocationArray"+eventXLocationArray);
+		 System.out.println("eventyLocationArray"+eventYLocationArray);
 		 
 		 
 //		 System.out.println("nReceptors: "+nReceptors);
@@ -1275,6 +1290,15 @@ public static void checkHopArray(int row, int col){
 		
 	}
 	
+	for(int i = 0; i<= eventXLocationArray.size() - 1; i++){
+		
+		xE = eventXLocationArray.get(i).floatValue();
+		yE = eventYLocationArray.get(i).floatValue();
+		
+		xEvent[i] = xE;
+		yEvent[i] = yE;
+		
+	}
 	
 		//System.out.println(Arrays.deepToString(xPlot));  
 		//System.out.println(Arrays.deepToString(yPlot));
@@ -1323,6 +1347,10 @@ public static void checkHopArray(int row, int col){
 		 positionPlot.setLineWidth(2);
 		 positionPlot.setColor(Color.MAGENTA);
 		 positionPlot.addPoints(xLocation,yLocation, 1);
+		 
+		 positionPlot.setLineWidth(3);
+		 positionPlot.setColor(Color.RED);
+		 positionPlot.addPoints(xEvent, yEvent, 0);
 	
 	 }/////////plotTrajectory() end
 	 
@@ -1430,8 +1458,7 @@ public static void checkHopArray(int row, int col){
 		//System.out.println("hopArray: "+hopArray);
 		//System.out.println("hopTimeArray: "+hopTimeArray);
 		
-		System.out.println("hopXLocationArray"+hopXLocationArray);
-		System.out.println("hopYLocationArray"+hopYLocationArray);
+		
 		float xH = 0.0f;
 		float yH = 0.0f;
 		
