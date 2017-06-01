@@ -16,14 +16,14 @@ public class Diffusion {
 static final int height = 150;
 static final int width = 150;
 static final int steps = 10; //steps added together before moving  
-static final float stepSize = 0.2f;
+static final float stepSize = 0.1f;
 static final int move = 10000000; //move n positions //
 static final int nReceptors = 14; //should not exceed height*width 
-static final int hopProb = 50; //0 to 100
+static final int hopProb = 5; //0 to 100
 static final float concentration = 0.0000000052f; //M     //0.000001f   0.0000000052f
 static final float kOn = 27000f;   //M^-1 * s^-1   //270000.0f;  
 static final float kOff = 0.00014f;  //s^1            //0.00014f; 
-static final float timeStep = 0.00000875f; //0.00000875f seconds 
+static final float timeStep = 0.00000012f; //0.00000012f seconds 
 static final int eventInterval = 100000;  //  interval based on move, not move*steps
 static final int generateActive = 50;
 ///////////////////////////////////////////////////////////////
@@ -115,7 +115,7 @@ static float events = 0;
 					 //of moves within method (for conjunction with stateSwitchArray)
 					
 						int m = i;
-						if(m%1000 == 0){
+						if(m%10000 == 0){
 						System.out.println("m: "+m);
 						}
 						//System.out.println(Arrays.deepToString(receptorArray));
