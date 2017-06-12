@@ -15,13 +15,13 @@ public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 //static final int outerHeight = 200;
 //static final int outerWidth = 200;
-static final int height = 150;     //150   //300
-static final int width = 150;	   //150   //300
-static final int gap = 25;
+static final int height = 10;     //150   //300
+static final int width = 10;	   //150   //300
+static final int gap = 10;
 static final int steps = 0; //steps added together before moving  //0  //0
-static final float stepSize = 0.5f;  //1.0   //0.5
-static final int move = 10000; //move n positions 
-static final int nReceptors = 1; //should not exceed height*width 
+static final float stepSize = 2.0f;  //1.0   //0.5
+static final int move = 10; //move n positions    //doesnt work for odd at the moment, fix in plotTraj
+static final int nReceptors = 2; //should not exceed height*width 
 static final int hopProb = 50; //0 to 100
 static final float concentration = 1.0f; //M     //0.000001f   0.0000000052f  K_off / K_on
 static final float kOn = 0.5f;   //M^-1 * s^-1   //270000.0f;  
@@ -42,10 +42,11 @@ static final float[][] copyTotalTimeArray = new float[nReceptors][move];
 static final float[] totalTimeArray = new float[move];
 
 
+
 static ArrayList<Float> xArray = new ArrayList<Float>();
 static ArrayList<Float> yArray = new ArrayList<Float>();
-static ArrayList<Float> xOuterArray = new ArrayList<Float>();
-static ArrayList<Float> yOuterArray = new ArrayList<Float>();
+static ArrayList<Float> xOutArray = new ArrayList<Float>();
+static ArrayList<Float> yOutArray = new ArrayList<Float>();
 static ArrayList<Float> collisionArray = new ArrayList<Float>();
 static ArrayList<Float> timePointArray = new ArrayList<Float>();
 static ArrayList<Float> collisionPerTimeArray = new ArrayList<Float>();
@@ -58,6 +59,8 @@ static ArrayList<Float> hopXLocationArray = new ArrayList<Float>();
 static ArrayList<Float> hopYLocationArray = new ArrayList<Float>();
 static ArrayList<Float> eventXLocationArray = new ArrayList<Float>();
 static ArrayList<Float> eventYLocationArray = new ArrayList<Float>();
+
+static ArrayList<ArrayList<Float>> mergeIndex = new ArrayList<ArrayList<Float>>();
 
 
 static float xElements = 0.0f;
@@ -129,16 +132,15 @@ static float events = 0;
 						if(m%1000 == 0){
 						System.out.println("m: "+m);
 						}
-						//System.out.println(Arrays.deepToString(receptorArray));
+						
 						movementArray(m);	
-						
-						outerMovementArray(m);
-						
+											
 						//System.out.println(Arrays.deepToString(moveArray));
 						//System.out.println("switchStateArray: "+switchStateArray);
-						/////////////////////////////////System.out.println("move: "+i);
+					
 					
 						addArrays(m); 
+						System.out.println("receptorArray: "+Arrays.deepToString(receptorArray));
 						System.out.println("outerReceptorArray: "+Arrays.deepToString(outerReceptorArray));
 							
 						ByteArrayOutputStream bas = new ByteArrayOutputStream();
@@ -264,7 +266,7 @@ static float events = 0;
 				//plotEvents();
 				//plotStates();
 				//plotStateChanges();
-				plotHop();
+				//plotHop();
 				//System.out.println(switchStateArray);
 				long endTime2 =  System.currentTimeMillis();
 				long totalTime2 = endTime2 - startTime2;
@@ -524,13 +526,25 @@ public static void checkHopArray(int index){
 	 public static synchronized void movementArray(int mm){
 		 Random rand = new Random();
 		 //value of m passed into this method as mm (mm variable takes value of m)
-		 
+		 //skipping receptors wont affect moveCount if place if statement after moveCount
+		 //so that moveCount can still be be counted to be converted to time
 		 int moveCount = mm +a;
 		 
 		 //System.out.println("before move a: "+a);
 		//System.out.println("moveCount: "+moveCount);
 				
-			for(int i = 0; i <= moveArray.length - 1; i++){			
+			for(int i = 0; i <= moveArray.length - 1; i++){	
+				//System.out.println("hopIndexArray: "+Arrays.deepToString(hopIndexArray));
+				if(hopIndexArray[i][0] == 2.0f){  //index of hopped receptor
+					
+					//pass mm into this method too to keep track of counts
+					//pass i into this method to use as hop index to only add move to indexed out receptor
+					outerMovementArray(mm,i);
+				
+						//System.out.println("skip this receptor: "+Arrays.toString(receptorArray[i]));					
+				}
+				else{
+				
 					//System.out.println("before move a: "+a);
 					//System.out.println("moveCount: "+moveCount);
 					//System.out.println("mm: "+mm);
@@ -738,7 +752,7 @@ public static void checkHopArray(int index){
 				 }
 				//System.out.println("moveArray after move loop: "+Arrays.deepToString(moveArray));
 				 //System.out.println("New moveArray state: "+moveArray[i][0]);
-				 
+				} //end of else (no skip) 
 		}///////////////end of moveArray for loop
 			
 			//System.out.println("after move a: "+a);
@@ -994,14 +1008,14 @@ public static void checkHopArray(int index){
 	 }//////////////////////////////end of k step for loop
  }/////////movementArray() end
 	 
-	 public static synchronized void outerMovementArray(int mm){
+	 public static synchronized void outerMovementArray(int omm, int outIndex){
 		 
 		 Random rand = new Random();
 		//System.out.println("outerMovementArray()  outerReceptorArray: "+Arrays.deepToString(outerReceptorArray));
 		 
-		 for(int i = 0; i <= outerMoveArray.length - 1; i++){
+		// for(int i = 0; i <= outerMoveArray.length - 1; i++){
 			 
-			 outerMoveArray[i][0] = outerReceptorArray[i][0];
+			// outerMoveArray[i][0] = outerReceptorArray[i][0];
 			 
 			 int outerRandMove = rand.nextInt(2);
 			 int outerRandDir = rand.nextInt(2);
@@ -1009,55 +1023,55 @@ public static void checkHopArray(int index){
 			 if(outerRandMove == 0){  //row change
 				 if(outerRandDir == 0){  //negative value
 					 
-					 outerMoveArray[i][1] = -stepSize;
+					 outerMoveArray[outIndex][1] = -stepSize;
 					 
-					 if(outerMoveArray[i][0] == 0.0f){  //if receptor is inactive
+					 if(outerMoveArray[outIndex][0] == 0.0f){  //if receptor is inactive
 						 
 						 boolean on = switchActive();
 						 if(on == true){   //switch to active
-							 outerMoveArray[i][0] = 1.0f;
+							 outerMoveArray[outIndex][0] = 1.0f;
 							 //add switch state array stuff later, unsure if it should be in separate or same array
 						 }
 						 else if( on == false){  //stay inactive
 							 
-							 outerMoveArray[i][0] = 0.0f;
+							 outerMoveArray[outIndex][0] = 0.0f;
 						 }
 					 }
-					 else if(outerMoveArray[i][0] == 1.0f){  //if receptor is active
+					 else if(outerMoveArray[outIndex][0] == 1.0f){  //if receptor is active
 						 
 						 boolean off = switchInactive();
 						 if(off == true){  //switch to inactive
-							 outerMoveArray[i][0] = 0.0f;
+							 outerMoveArray[outIndex][0] = 0.0f;
 						 }
 						 else if( off == false){  //stay active
-							 outerMoveArray[i][0] = 1.0f;
+							 outerMoveArray[outIndex][0] = 1.0f;
 						 }
 						 
 					 }
 				 }	
 				 if(outerRandDir == 1){  //positive value
-					 outerMoveArray[i][1] = stepSize;
+					 outerMoveArray[outIndex][1] = stepSize;
 					 
-					 if(outerMoveArray[i][0] == 0.0f){  //if receptor is inactive
+					 if(outerMoveArray[outIndex][0] == 0.0f){  //if receptor is inactive
 						 
 						 boolean on = switchActive();
 						 if(on == true){   //switch to active
-							 outerMoveArray[i][0] = 1.0f;
+							 outerMoveArray[outIndex][0] = 1.0f;
 							 //add switch state array stuff later, unsure if it should be in separate or same array
 						 }
 						 else if( on == false){  //stay inactive
 							 
-							 outerMoveArray[i][0] = 0.0f;
+							 outerMoveArray[outIndex][0] = 0.0f;
 						 }
 					 }
-					 else if(outerMoveArray[i][0] == 1.0f){  //if receptor is active
+					 else if(outerMoveArray[outIndex][0] == 1.0f){  //if receptor is active
 						 
 						 boolean off = switchInactive();
 						 if(off == true){  //switch to inactive
-							 outerMoveArray[i][0] = 0.0f;
+							 outerMoveArray[outIndex][0] = 0.0f;
 						 }
 						 else if( off == false){  //stay active
-							 outerMoveArray[i][0] = 1.0f;
+							 outerMoveArray[outIndex][0] = 1.0f;
 						 }
 						 
 					 }
@@ -1065,31 +1079,31 @@ public static void checkHopArray(int index){
 			 }
 			 if(outerRandMove == 1){  //column change
 				 if(outerRandDir == 0){  //negative value
-					 outerMoveArray[i][2] = -stepSize;
+					 outerMoveArray[outIndex][2] = -stepSize;
 					 
-					 if(outerMoveArray[i][0] == 0.0f){  //if receptor is inactive
+					 if(outerMoveArray[outIndex][0] == 0.0f){  //if receptor is inactive
 						 
 						 boolean on = switchActive();
 						 if(on == true){  //switch to active
 							 
-							 outerMoveArray[i][0] = 1.0f;
+							 outerMoveArray[outIndex][0] = 1.0f;
 							 		 
 						 }
 						 else if(on == false){  //stay inactive
 							 
-							 outerMoveArray[i][0] = 0.0f;
+							 outerMoveArray[outIndex][0] = 0.0f;
 						 }
 						 
 					 }
-					 else if(outerMoveArray[i][0] == 1.0f){  //if receptor is active
+					 else if(outerMoveArray[outIndex][0] == 1.0f){  //if receptor is active
 						 
 						 boolean off = switchInactive();
 						 if(off == true){  //switch to inactive
 							 
-							 outerMoveArray[i][0] = 0.0f;
+							 outerMoveArray[outIndex][0] = 0.0f;
 						 }
 						 else if(off == false){  //stay active
-							 outerMoveArray[i][0] = 1.0f;
+							 outerMoveArray[outIndex][0] = 1.0f;
 									 
 						 }
 					 }
@@ -1097,38 +1111,40 @@ public static void checkHopArray(int index){
 					 
 				 }
 				 if(outerRandDir == 1){  //positive value
-					 outerMoveArray[i][2] = stepSize;
+					 outerMoveArray[outIndex][2] = stepSize;
 					 
-					 if(outerMoveArray[i][0] == 0.0f){  //if receptor is inactive
+					 if(outerMoveArray[outIndex][0] == 0.0f){  //if receptor is inactive
 						 
 						 boolean on = switchActive();
 						 if(on == true){  //switch to active
 							 
-							 outerMoveArray[i][0] = 1.0f;
+							 outerMoveArray[outIndex][0] = 1.0f;
 							 		 
 						 }
 						 else if(on == false){  //stay inactive
 							 
-							 outerMoveArray[i][0] = 0.0f;
+							 outerMoveArray[outIndex][0] = 0.0f;
 						 }
 						 
 					 }
-					 else if(outerMoveArray[i][0] == 1.0f){  //if receptor is active
+					 else if(outerMoveArray[outIndex][0] == 1.0f){  //if receptor is active
 						 
 						 boolean off = switchInactive();
 						 if(off == true){  //switch to inactive
 							 
-							 outerMoveArray[i][0] = 0.0f;
+							 outerMoveArray[outIndex][0] = 0.0f;
 						 }
 						 else if(off == false){  //stay active
-							 outerMoveArray[i][0] = 1.0f;
+							 outerMoveArray[outIndex][0] = 1.0f;
 									 
 						 }
 					 }
 					 
 				 }
 			 }
-		 }
+		// }
+		 
+	
 	 }
 	 
 	 public static boolean hopProbability(){
@@ -1155,10 +1171,10 @@ public static void checkHopArray(int index){
 		 //System.out.println("addArrays mm: "+mm);
 		 
 		 //for inner boundary
-		 for (int i = 0; i <= moveArray.length - 1; i++){	 
-			 
-			
-			
+		 for (int i = 0; i <= moveArray.length - 1; i++){
+			 //if not state 2, add moveArray to receptorArray
+			 if(hopIndexArray[i][0] != 2.0f){			 
+				 
 			 receptorArray[i][0] = moveArray[i][0];
 			 //System.out.println(moveArray[i][0]);
 			 //System.out.println("receptorArray before addition: "+Arrays.deepToString(receptorArray));
@@ -1187,7 +1203,11 @@ public static void checkHopArray(int index){
 					 outerReceptorArray[i][1] = receptorArray[i][1];
 					 outerReceptorArray[i][2] = receptorArray[i][2];
 					 
-				
+//**might not need to change receptorArray state to 2, hopIndexArray should be good for skip referencing**//
+					 // for state 2 skip
+					// receptorArray[i][0] = 2.0f;
+					//System.out.println("receptorArray after hop: "+Arrays.deepToString(receptorArray));
+					 				 
 					 hopXLocationArray.add(0.0f);
 					 hopYLocationArray.add(receptorArray[i][2]);
 					 hops++;
@@ -1195,7 +1215,7 @@ public static void checkHopArray(int index){
 					 hopTimeArray.add((float) mm*timeStep);			
 					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 					 
-					 //for regenerating a new receptor when one hops, but may use later 
+//**for regenerating a new receptor when one hops, but may use later**//
 					 //when one receptor leaves area and new one comes in
 //					 RandReplaceRow = jRow();
 //					 RandReplaceCol = jCol();
@@ -1225,7 +1245,7 @@ public static void checkHopArray(int index){
 			 
 			 //BOUNDARY CHECKING
 			 else if(receptorArray[i][1] > height){	
-				 
+				
 				 
 				 //System.out.println("222before hop x: "+receptorArray[i][1]);
 				 //System.out.println("222before hop y: "+receptorArray[i][2]);
@@ -1239,7 +1259,12 @@ public static void checkHopArray(int index){
 					 outerReceptorArray[i][0] = receptorArray[i][0];
 					 outerReceptorArray[i][1] = receptorArray[i][1];
 					 outerReceptorArray[i][2] = receptorArray[i][2];
-					 			
+					 
+//**might not need to change receptorArray state to 2, hopIndexArray should be good for skip referencing**//
+					// for state 2 skip
+					// receptorArray[i][0] = 2.0f;
+					// System.out.println("receptorArray after hop: "+Arrays.deepToString(receptorArray));
+					 
 					 hopXLocationArray.add((float) height);
 					 hopYLocationArray.add(receptorArray[i][2]);
 					 hops++;
@@ -1247,7 +1272,7 @@ public static void checkHopArray(int index){
 					 hopTimeArray.add((float) mm*timeStep);
 					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 					
-					 //for regenerating a new receptor when one hops, but may use later 
+//**for regenerating a new receptor when one hops, but may use later**// 
 					 //when one receptor leaves area and new one comes in
 //					 RandReplaceRow = jRow();
 //					 RandReplaceCol = jCol();
@@ -1292,6 +1317,11 @@ public static void checkHopArray(int index){
 					 outerReceptorArray[i][0] = receptorArray[i][0];
 					 outerReceptorArray[i][1] = receptorArray[i][1];
 					 outerReceptorArray[i][2] = receptorArray[i][2];
+//**might not need to change receptorArray state to 2, hopIndexArray should be good for skip referencing**//					 
+					// for state 2 skip
+					// receptorArray[i][0] = 2.0f;
+					//System.out.println("receptorArray after hop: "+Arrays.deepToString(receptorArray));
+					 
 					 
 					 hopXLocationArray.add(receptorArray[i][1]);
 					 hopYLocationArray.add(0.0f);
@@ -1300,7 +1330,7 @@ public static void checkHopArray(int index){
 					 hopTimeArray.add((float) mm*timeStep);
 					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 					
-					 //for regenerating a new receptor when one hops, but may use later 
+//**for regenerating a new receptor when one hops, but may use later**//
 					 //when one receptor leaves area and new one comes in
 //					 RandReplaceRow = jRow();
 //					 RandReplaceCol = jCol();
@@ -1344,6 +1374,11 @@ public static void checkHopArray(int index){
 					 outerReceptorArray[i][0] = receptorArray[i][0];
 					 outerReceptorArray[i][1] = receptorArray[i][1];
 					 outerReceptorArray[i][2] = receptorArray[i][2];
+//**might not need to change receptorArray state to 2, hopIndexArray should be good for skip referencing**//				 
+					// for state 2 skip
+					// receptorArray[i][0] = 2.0f;
+					// System.out.println("receptorArray after hop: "+Arrays.deepToString(receptorArray));
+					 
 					 
 	
 					 hopXLocationArray.add(receptorArray[i][1]);
@@ -1353,7 +1388,7 @@ public static void checkHopArray(int index){
 					 hopTimeArray.add((float) mm*timeStep);
 					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 					
-					 //for regenerating a new receptor when one hops, but may use later 
+//**for regenerating a new receptor when one hops, but may use later**//
 					 //when one receptor leaves area and new one comes in
 //					 RandReplaceRow = jRow();
 //					 RandReplaceCol = jCol();
@@ -1381,7 +1416,7 @@ public static void checkHopArray(int index){
 				 receptorArray[i][2] = width;
 				 }
 			 }
-			 //skip state 2
+			
 			 xElements = receptorArray[i][1];//////////////////////////zz
 			 yElements = receptorArray[i][2];//////////////////////////zz
 			//System.out.println("moveArray size: "+(moveArray.length-1));
@@ -1393,18 +1428,38 @@ public static void checkHopArray(int index){
 			 // System.out.println("xArray is: ");
 			// System.out.println(xArray);
 			 
-			// System.out.println("moveArray BEFORE deletion: "+Arrays.deepToString(moveArray));
-			
-			 //System.out.println("moveArray AFTER deletion: "+Arrays.deepToString(moveArray));
-			 
-		 }////////////////////end of inner boundary for loop
+			 }
+			// if state 2, add outerMoveArray to outerReceptorArray
+			 else if (hopIndexArray[i][0] == 2.0f){
+				 outerReceptorArray[i][0] = outerMoveArray[i][0];
+				 outerReceptorArray[i][1] = outerReceptorArray[i][1] + outerMoveArray[i][1];
+				 outerReceptorArray[i][2] = outerReceptorArray[i][2] + outerMoveArray[i][2];
+				 
+				 
+				 //***insert boundary conditions later***//
+				 
+				 
+				 xOuterElements = outerReceptorArray[i][1];
+				 yOuterElements = outerReceptorArray[i][2];
+				 
+				 xOutArray.add(xOuterElements);
+				 yOutArray.add(yOuterElements);
+				 
+				 
+			 }
+		 }////////////////////end of boundary for loop
 		 	 
 	
 		 
-		 //clear moveArray after ALL moveArrays have been added, so put after inner boundary for loop
+		 //clear moveArray after ALL moveArray per receptor have been added
 		 for(int j = 0; j < moveArray.length; j++){
 				Arrays.fill(moveArray[j], '\0');
 			}
+		 
+		 //clear outerMoveArray after ALL outerMoveArray per receptor have been added
+		 for(int j = 0; j < outerMoveArray.length; j++){
+			 Arrays.fill(outerMoveArray[j], '\0');
+		 }
 		//System.out.println("hopXLocationArray"+hopXLocationArray);
 		//System.out.println("hopYLocationArray"+hopYLocationArray);
 		// System.out.println("AAAAAAAAAAAAAAAAAAAAAAAA  AFTER BOUND CHECK new receptor array is: ");
@@ -1415,26 +1470,8 @@ public static void checkHopArray(int index){
 		// System.out.println(yArray);
 		 
 	
-		 //outer boundary for loop
-		 for(int i = 0; i <= outerMoveArray.length - 1; i++){
-			 
-			 outerReceptorArray[i][0] = outerMoveArray[i][0];
-			 outerReceptorArray[i][1] = outerReceptorArray[i][1] + outerMoveArray[i][1];
-			 outerReceptorArray[i][2] = outerReceptorArray[i][2] + outerMoveArray[i][2];
-			 
-			 //***insert boundary conditions later***//
-			 
-			 xOuterElements = outerReceptorArray[i][1];
-			 yOuterElements = outerReceptorArray[i][2];
-			 
-			 xOuterArray.add(xOuterElements);
-			 yOuterArray.add(yOuterElements);
-		 }//outer boundary for loop end
-		 
-		 //clear outerMoveArray after ALL outerMoveArrays have been added, so put after outer boundary for loop
-		 for(int j = 0; j < outerMoveArray.length; j++){
-			 Arrays.fill(outerMoveArray[j], '\0');
-		 }
+
+		
 	 }////////addArrays() end
 	 
 	 public static synchronized boolean eventCheck(){
@@ -1488,14 +1525,24 @@ public static void checkHopArray(int index){
 	 }///////eventCheck() end
 	 
 	 public static void plotTrajectory(){
-		 
-		 ArrayList<ArrayList<Float>> yFinalArray = new ArrayList<ArrayList<Float>>(); //zz
-		 ArrayList<ArrayList<Float>> xFinalArray = new ArrayList<ArrayList<Float>>();//zz
-		 float xP = 0f;//zz
-		 float yP = 0f;//zz
-		 float[][] xPlot = new float[nReceptors][move];//zz
-		 float[][] yPlot = new float[nReceptors][move];//zz
-		 
+/////////////////////////////////////////zz 
+		 ArrayList<ArrayList<Float>> xFinalArray = new ArrayList<ArrayList<Float>>(); 
+		 ArrayList<ArrayList<Float>> yFinalArray = new ArrayList<ArrayList<Float>>(); 
+		ArrayList<ArrayList<Float>> xOutFinalArray = new ArrayList<ArrayList<Float>>(); 
+		 ArrayList<ArrayList<Float>> yOutFinalArray = new ArrayList<ArrayList<Float>>(); 
+		 float xP = 0.0f;
+		 float yP = 0.0f;
+		 float xOutP = 0.0f;
+		 float yOutP = 0.0f;
+		
+		 //***may cause an issue, since outer boundary move + inner boundary move = move
+		 //***should cause trail of zeros when switching from plotting inner boundary rec to outer boundary rec
+		 float[][] xPlot = new float[nReceptors][move];
+		 float[][] yPlot = new float[nReceptors][move];
+		 float[][] xOutPlot = new float[nReceptors][move];
+		 float[][] yOutPlot = new float[nReceptors][move];
+/////////////////////////////////////////zz
+	 
 		 float xL = 0.0f;
 		 float yL = 0.0f;
 		 float[] xLocation = new float[hopXLocationArray.size()];
@@ -1516,10 +1563,13 @@ public static void checkHopArray(int index){
 //		 System.out.println("yArray is: "+yArray);
 //		 System.out.println("yArray.size(): "+yArray.size());
 		 
-		 int a = 1;
+		 //***For inner boundary position plotting***//
 		 
-	
-		 if((xArray.size())%2 == 0){  /////////////////zz
+		 int a = 0;  //set a from 1 to 0, fixes odd loop issue
+		 System.out.println("Before even/odd for loop xArray: "+xArray);
+		 System.out.println("Before even/odd for loop yArray: "+yArray);
+/////////////////////////////////////////zz
+		 if((xArray.size())%2 == 0){  //even
 		 	for(int i = 0; i <= nReceptors - 1; i++){
 		 		
 		 		//create new array for each ith set of positions
@@ -1541,9 +1591,12 @@ public static void checkHopArray(int index){
 		 	//System.out.println("xFinalArray: "+xFinalArray);
 		 	//System.out.println("yFinalArray: "+yFinalArray);
 		 	}
+		 	//System.out.println("aaaxFinalArray: "+xFinalArray);
+			//System.out.println("aaayFinalArray: "+yFinalArray);
 		 }
-		 else{
-			 for(int i = 0; i <= nReceptors -1; i++){
+		 	 
+		 else{    //odd
+			 for(int i = 0; i <= nReceptors - 1; i++){
 				 
 				//create new array for each ith set of positions
 		 		 ArrayList<Float> xFinalInnerArray = new ArrayList<Float>(); 
@@ -1554,7 +1607,7 @@ public static void checkHopArray(int index){
 			 			//System.out.println("odd");
 			 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j+ " i = "+i);
 			 			
-			 			xFinalInnerArray.add(xArray.get(j));
+			 			xFinalInnerArray.add(xArray.get(j));////////
 			 			yFinalInnerArray.add(yArray.get(j));
 					
 				 }
@@ -1566,20 +1619,19 @@ public static void checkHopArray(int index){
 				 	//System.out.println("xFinalArray: "+xFinalArray);
 				 	//System.out.println("yFinalArray: "+yFinalArray);
 			 }
-		 } /////////////////////zz
+		 } 
 		 
-		//System.out.println("xFinalArray: "+xFinalArray);
-		//System.out.println("yFinalArray: "+yFinalArray);
+		//System.out.println("bbbxFinalArray: "+xFinalArray);
+		//System.out.println("bbbyFinalArray: "+yFinalArray);
 		
 		 	
-	for(int i = 0; i<=xFinalArray.size() - 1; i++){	 	////////////zz
+	for(int i = 0; i<=xFinalArray.size() - 1; i++){	 	
 	
 		 Float[] xO = xFinalArray.get(i).toArray(new Float[xFinalArray.size()]);
 		 Float[] yO = yFinalArray.get(i).toArray(new Float[yFinalArray.size()]);
 		 
-		 for(int j = 0; j<=xFinalArray.get(i).size() - 1; j++){
-			 
-			
+		 for(int j = 0; j <= xFinalArray.get(i).size() - 1; j++){
+						
 			// System.out.println("xO: "+xO[j]);
 			// System.out.println("yO: "+yO[j]);
 			 xP = xO[j].floatValue();
@@ -1591,8 +1643,76 @@ public static void checkHopArray(int index){
 			 //System.out.println("yP: "+yP);
 			 
 		 }
-	}		///////////////zz
+	}	
+System.out.println("xPlot"+Arrays.deepToString(xPlot));
+System.out.println("yPlot"+Arrays.deepToString(yPlot));
+	
+	///////////*** end of inner boundary plotting ***///////////////
+	
+	///////////*** for outer boundary plotting ***/////////////////
+//	System.out.println("last outerReceptorArray position: "+Arrays.deepToString(outerReceptorArray));
+	int b = 0;
+	 System.out.println("Before even/odd for loop xOutArray: "+xOutArray);
+	 System.out.println("Before even/odd for loop yOutArray: "+yOutArray);
+	if(xOutArray.size()%2 == 0){      //even size
+		for(int i = 0; i <= nReceptors - 1; i++){
+			 
+			//don't get confused, inner refers to the inner arrays within the array, not inner boundary
+			//hence why it's called xOut...
+			ArrayList<Float> xOutFinalInnerArray = new ArrayList<Float>();
+			ArrayList<Float> yOutFinalInnerArray = new ArrayList<Float>();
+			for(int j = 0 + i; j <= xOutArray.size() - 1; j+= nReceptors){
+				
+				xOutFinalInnerArray.add(xOutArray.get(j));
+				yOutFinalInnerArray.add(yOutArray.get(j));
+			}
+			
+			xOutFinalArray.add(xOutFinalInnerArray);
+			yOutFinalArray.add(yOutFinalInnerArray);
+			
+		}
+	}
+	else{   //odd size
+		for(int i = 0; i <= nReceptors - 1; i++){
+			
+			ArrayList<Float> xOutFinalInnerArray = new ArrayList<Float>();
+			ArrayList<Float> yOutFinalInnerArray = new ArrayList<Float>();
+			
+			for(int j = 0 + i; j <= (xOutArray.size() - (nReceptors - b)); j+= nReceptors ){
+				
+				xOutFinalInnerArray.add(xOutArray.get(j));
+				yOutFinalInnerArray.add(yOutArray.get(j));
+			}
+			
+			b++;
+			xOutFinalArray.add(xOutFinalInnerArray);
+			yOutFinalArray.add(yOutFinalInnerArray);
+		}
+	}  
+	//System.out.println("xOutFinalArray: "+xOutFinalArray);
+	//System.out.println("yOutFinalArray: "+yOutFinalArray);
+	
+	for(int i = 0; i <= xOutFinalArray.size() - 1; i++){    
+		
+		Float[] xOutO = xOutFinalArray.get(i).toArray(new Float[xOutFinalArray.size()]);
+		Float[] yOutO = yOutFinalArray.get(i).toArray(new Float[yOutFinalArray.size()]);
+		
+		for(int j = 0; j <= xOutFinalArray.get(i).size() - 1; j++){
+			
+			xOutP = xOutO[j].floatValue();
+			yOutP = yOutO[j].floatValue();
+			
+			xOutPlot[i][j] = xOutP;
+			yOutPlot[i][j] = yOutP;
+		}
+		
+	}
+	
+	System.out.println("xOutPlot"+Arrays.deepToString(xOutPlot));
+	System.out.println("yOutPlot"+Arrays.deepToString(yOutPlot));
 
+/////////////////////////////////////////zz	
+	//*** end of outer boundary plotting ***//
 	for(int i = 0; i <= hopXLocationArray.size() - 1; i++){
 		
 		xL = hopXLocationArray.get(i).floatValue();
@@ -1619,18 +1739,25 @@ public static void checkHopArray(int index){
 		//System.out.println("R1 first point: "+xPlot[0][1]+" , "+yPlot[0][2]);
 		
 		 Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)",xPlot[0],yPlot[0]);//zz
-		 //Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)");
-		 //line width for dotted boundary line
-		 
-		 //inner boundary
+//		 //Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)");
+//		 //line width for dotted boundary line
+//		 
+		 //draw inner boundary 
 		 positionPlot.setLineWidth(2);
 		 positionPlot.setColor(Color.BLUE);
 		 positionPlot.drawLine(0.0, 0.0, width, 0.0);
 		 positionPlot.drawLine(0.0, 0.0, 0.0, height);
 		 positionPlot.drawLine(width, height,0.0,height );
 		 positionPlot.drawLine(width, height, width, 0.0);
+//		 
+//		//draw outer boundary
+		 positionPlot.setLineWidth(2);
+		 positionPlot.setColor(Color.RED);
+		 positionPlot.drawLine(0.0-gap, 0.0-gap, width+gap, 0.0-gap);
+		 positionPlot.drawLine(0.0-gap, 0.0-gap, 0.0-gap, height+gap);
+		 positionPlot.drawLine(width+gap, height+gap,0.0-gap,height+gap );
+		 positionPlot.drawLine(width+gap, height+gap, width+gap, 0.0-gap);
 		 
-		
 		 //tested for squares only, not for rectangles, make sure height = width
 //		 positionPlot.setLineWidth(2);
 //		 positionPlot.setColor(Color.BLUE);
@@ -1639,41 +1766,44 @@ public static void checkHopArray(int index){
 //		 positionPlot.drawLine( ((outerHeight - height)/2)*-1, ((outerHeight - height)/2)+height,((outerHeight - height)/2)+height, ((outerHeight - height)/2)+height );
 //		 positionPlot.drawLine( ((outerWidth - width)/2)+width, ((outerWidth - width)/2)*-1, ((outerWidth - width)/2)+width, ((outerWidth - width)/2)+width );
 		 
-		 //outer boundary
-		 positionPlot.setLineWidth(2);
-		 positionPlot.setColor(Color.RED);
-		 positionPlot.drawLine(0.0-gap, 0.0-gap, width+gap, 0.0-gap);
-		 positionPlot.drawLine(0.0-gap, 0.0-gap, 0.0-gap, height+gap);
-		 positionPlot.drawLine(width+gap, height+gap,0.0-gap,height+gap );
-		 positionPlot.drawLine(width+gap, height+gap, width+gap, 0.0-gap);
 		 
-		positionPlot.setColor(Color.BLACK);  //  color for first receptor data set
+		 
+		 positionPlot.setColor(Color.BLACK);  //  color for first receptor data set
 		 positionPlot.setLimits(gap-100, height + 100, gap-100, width + 100); //x1,x2,y1,y2
 		//show() pertains to drawing first data set
 		//so set parameters for first data set before testPlot.show()
-		 //line width for first receptor data set 
+		 //line width for first receptor data set 	 
 		 positionPlot.setLineWidth(1);
 		 
-		
-		 
-	
 		 positionPlot.show();  
 		 
 		 //additional data sets
 		 //set methods apply to the first data set it encounters
 		 //so put directly before method that draws respective data set
 		 
+//		 for(int i = 1; i<=nReceptors - 1; i++){	 /////////zz
+//				//line width for subsequent receptors 
+//				
+//			 
+//			 	positionPlot.setLineWidth(1);
+//				positionPlot.setColor(Color.BLACK);
+//				positionPlot.addPoints(xPlot[i],yPlot[i],2); 
+//				//System.out.println("plot receptor: "+i);		
+//				
+//				
+//			 }/////////zz
+//		 
 		 for(int i = 1; i<=nReceptors - 1; i++){	 /////////zz
 				//line width for subsequent receptors 
 				
 			 
 			 	positionPlot.setLineWidth(1);
-				positionPlot.setColor(Color.BLACK);
-				positionPlot.addPoints(xPlot[i],yPlot[i],2); 
+				positionPlot.setColor(Color.GREEN);
+				positionPlot.addPoints(xOutPlot[i],yOutPlot[i],2); 
 				//System.out.println("plot receptor: "+i);		
 				
+				
 			 }/////////zz
-		 
 		 
 //		 	positionPlot.setLineWidth(1);
 //			positionPlot.setColor(Color.GREEN);
@@ -1695,7 +1825,7 @@ public static void checkHopArray(int index){
 		 positionPlot.setLineWidth(2);
 		 positionPlot.setColor(Color.RED);
 		 positionPlot.addPoints(xEvent, yEvent, 0);
-//		 
+		 
 
 	 }/////////plotTrajectory() end
 	 
