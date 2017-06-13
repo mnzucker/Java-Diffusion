@@ -19,9 +19,9 @@ static final int width = 150;	   //150   //300
 static final int gap = 20;
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final float stepSize = 0.5f;  //1.0   //0.5
-static final int move = 100000; //move n positions    //doesnt work for odd at the moment, fix in plotTraj
+static final int move = 20000; //move n positions    //doesnt work for odd at the moment, fix in plotTraj
 static final int nReceptors = 1; //should not exceed height*width 
-static final int hopProb = 20; //0 to 100
+static final int hopProb = 5; //0 to 100
 static final float concentration = 1.0f; //M     //0.000001f   0.0000000052f  K_off / K_on
 static final float kOn = 0.5f;   //M^-1 * s^-1   //270000.0f;  
 static final float kOff = 0.5f;  //s^1            //0.00014f; 
@@ -1736,6 +1736,20 @@ public static void checkHopArray(int index){
 					 System.out.println("888don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
 					 }
 				 }  
+		//Boundary conditions if goes past outer edge, disappears and generate new at random edge location
+				 else if(receptorArray[i][1] < (0 - gap)){  //pass left edge				 
+					 edgeGeneration(i);
+					 
+				 }
+				 else if(receptorArray[i][1] > (width + gap)){  //pass right edge
+					 edgeGeneration(i);
+				 }
+				 else if(receptorArray[i][2] < (0 - gap)){  //pass bottom edge
+					 edgeGeneration(i);
+				 }
+				 else if(receptorArray[i][2] > (height + gap)){  //pass top edge
+					 edgeGeneration(i);
+				 }
 
 				 xElements = receptorArray[i][1];//////////////////////////zz
 				 yElements = receptorArray[i][2];//////////////////////////zz
@@ -1751,7 +1765,7 @@ public static void checkHopArray(int index){
 				 
 			 }///////// **END OF if(0.1f or 1.1f)**///////
 		  
-		  //**outer edge boundary conditions, make edge generation method
+		  
 		  
 		  }////////////////////end of for loop
 	
@@ -1771,6 +1785,84 @@ public static void checkHopArray(int index){
 			// System.out.println(yArray);
 		 
 		 } ////////addArrays() end
+	 
+	 public static void edgeGeneration(int index){
+		 
+		 int xEdge = 0;
+		 int yEdge = 0;
+		 Random rand = new Random();
+		 int randSide = rand.nextInt(4);
+		 if(randSide == 0){ //bottom
+			//from + rand.nextInt(to - from + 1)
+		
+			xEdge = (0 - gap) + rand.nextInt( (width + gap) - (0 - gap) + 1 );
+			yEdge = (0 - gap);
+			
+			receptorArray[index][1] = xEdge;
+			receptorArray[index][2] = yEdge;
+			
+			boolean goActive = randState();
+			if(goActive == true){
+				receptorArray[index][0] = 1.1f;		
+			}
+			else{
+				receptorArray[index][0] = 0.1f;
+			}
+			
+		 }
+		 if(randSide == 1){ //left
+			//from + rand.nextInt(to - from + 1)
+			 
+			 xEdge = (0 - gap);
+			 yEdge = (0 - gap) + rand.nextInt( (height + gap) - (0 - gap) + 1);
+			 
+			 receptorArray[index][1] = xEdge;
+			 receptorArray[index][2] = yEdge;
+			 
+			 boolean goActive = randState();
+				if(goActive == true){
+					receptorArray[index][0] = 1.1f;		
+				}
+				else{
+					receptorArray[index][0] = 0.1f;
+				}
+		 }
+		 if(randSide == 2){ //top
+			//from + rand.nextInt(to - from + 1)
+			 
+			 xEdge = (0 - gap) + rand.nextInt( (width + gap) - (0 - gap) + 1 );
+			 yEdge = (height + gap);
+			 
+			 receptorArray[index][1] = xEdge;
+			 receptorArray[index][2] = yEdge;
+			 
+			 boolean goActive = randState();
+				if(goActive == true){
+					receptorArray[index][0] = 1.1f;		
+				}
+				else{
+					receptorArray[index][0] = 0.1f;
+				}
+		 }
+		 if(randSide == 3){ // right
+			//from + rand.nextInt(to - from + 1)
+			 
+			 xEdge = (width + gap);
+			 yEdge = (0 - gap) + rand.nextInt( (height + gap) - (0 - gap) + 1 );
+			 
+			 receptorArray[index][1] = xEdge;
+			 receptorArray[index][2] = yEdge;
+			 
+			 boolean goActive = randState();
+				if(goActive == true){
+					receptorArray[index][0] = 1.1f;		
+				}
+				else{
+					receptorArray[index][0] = 0.1f;
+				}			 
+		 }
+		
+	 }
 		
 
 	 public static synchronized boolean eventCheck(){
