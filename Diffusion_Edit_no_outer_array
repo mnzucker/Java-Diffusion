@@ -15,13 +15,13 @@ import ij.text.TextWindow;
 public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 
-static final int height = 300;     //150   //300
-static final int width = 300;	   //150   //300
+static final int height = 5;     //150   //300
+static final int width = 5;	   //150   //300
 static final int gap = 20;
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
-static final double stepSize = 0.5;  //1.0   //0.5
-static final int move = 50000000; //move n positions   //500,000,000
-static final int nReceptors = 3; //should not exceed height*width 
+static final double stepSize = 1.0;  //1.0   //0.5
+static final int move = 60000; //move n positions   //500,000,000
+static final int nReceptors = 1; //should not exceed height*width 
 static final int hopProb = 0; //0 to 100   //**if confining to inner boundary only, change eventCheck()
 static final double concentration = 0.00001; //M     //0.000001   0.0000000052f  K_off / K_on
 static final double kOn = 3000000.0;   //M^-1 * s^-1   //270000.0;  
@@ -29,9 +29,10 @@ static final double kOff = 20.0;  //s^1            //0.00014;
 static final double timeStep = 0.0000003; //0.0000003; //seconds
 static final int eventInterval = 1000;  //  interval based on move, not move*steps
 static final int generateActive = 50;
+static final int iterations = 2;
 ///////////////////////////////////////////////////////////////
 
-//optimization --> track state changes at timepoints for state and time arrays instead of saving all moves
+//optimization --> track state changes at time points for state and time arrays instead of saving all moves
 //use while loop to contain move loop in main 
 static final double[][] receptorArray = new double[nReceptors][3];
 static final double[][] previousReceptorArray = new double[nReceptors][3];
@@ -267,9 +268,9 @@ static double events = 0;
 				
 /////////////////////////////PLOTS/////////////////////////////////////////////
 				
-				//plotTrajectory();
+				plotTrajectory();
 				//plotEvents();
-				plotStates();
+				//plotStates();
 				//plotStateChanges();
 				//plotHop();
 				//System.out.println(switchStateArray);
@@ -1155,150 +1156,150 @@ public static void checkHopArray(int index){
 ////////////////////////***BOUNDARY CONDITIONS***////////////////////		 		  
 			  
 			 //BOUNDARY CHECKING
-//			 if(receptorArray[i][1] < 0){
-//				 				 
-//				 //System.out.println("111before hop x: "+receptorArray[i][1]);
-//				//System.out.println("111before hop y: "+receptorArray[i][2]);
-//				 boolean hop = hopProbability();
-//				 if(hop == true){ //hop 
-//					 
-//					 //System.out.println("111receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));	 
-//					 hopOutXLocationArray.add(0.0);
-//					 hopOutYLocationArray.add(receptorArray[i][2]);
-//					 hops++;
-//					 hopArray.add(hops);
-//					 hopTimeArray.add((double) mm*timeStep);			
-//					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
-//					 if(receptorArray[i][0] == 1.0){
-//						 receptorArray[i][0] = 1.1;
-//					 }
-//					 else if(receptorArray[i][0] == 0.0){
-//						 receptorArray[i][0] = 0.1;
-//					 }
-//					 //System.out.println("111receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
-//					 
-//				 }
-//				 else{			  //don't hop
-//				 //System.out.println("111don't hop BEFORE: "+Arrays.deepToString(receptorArray));
-//				 receptorArray[i][1] = 0;
-//				 //receptorArray[i][1] = (0 + stepSize);
-//				 //System.out.println("111don't hop AFTER: "+Arrays.deepToString(receptorArray));
-//				 }
-//			 }
-//			 
-//			 //BOUNDARY CHECKING
-//			 else if(receptorArray[i][1] > width){	
-//				
-//				 
-//				 //System.out.println("222before hop x: "+receptorArray[i][1]);
-//				 //System.out.println("222before hop y: "+receptorArray[i][2]);
-//				 boolean hop = hopProbability();
-//				 if(hop == true){  //hop
-//					 
-//					 //System.out.println("222receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
-//							 
-//					 hopOutXLocationArray.add((double) width);
-//					 hopOutYLocationArray.add(receptorArray[i][2]);
-//					 hops++;
-//					 hopArray.add(hops);
-//					 hopTimeArray.add((double) mm*timeStep);
-//					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
-//					 if(receptorArray[i][0] == 1.0){
-//						 receptorArray[i][0] = 1.1;
-//					 }
-//					 else if(receptorArray[i][0] == 0.0){
-//						 receptorArray[i][0] = 0.1;
-//					 }
-//					 //System.out.println("222receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
-//					 
-//				 }
-//				 else{			   //don't hop
-//					 //System.out.println("222don't hop BEFORE: "+Arrays.deepToString(receptorArray));
-//					 receptorArray[i][1] = width;
-//				     //receptorArray[i][1] = (width - stepSize);
-//				 //System.out.println("222don't hop AFTER: "+Arrays.deepToString(receptorArray));
-//				 }
-//			 } 
-//			 /////////////////receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
-//			 
-//			 //BOUNDARY CHECKING		
-//			 if(receptorArray[i][2] < 0){
-//				 
-//				 
-//				//System.out.println("333before hop x: "+receptorArray[i][1]);
-//				//System.out.println("333before hop y: "+receptorArray[i][2]);
-//				 boolean hop = hopProbability();
-//				 if(hop == true){  //hop
-//					 
-//					//System.out.println("333receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
-//				
-//					 hopOutXLocationArray.add(receptorArray[i][1]);
-//					 hopOutYLocationArray.add(0.0);
-//					 hops++;
-//					 hopArray.add(hops);
-//					 hopTimeArray.add((double) mm*timeStep);
-//					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
-//					 if(receptorArray[i][0] == 1.0){
-//						 receptorArray[i][0] = 1.1;
-//					 }
-//					 else if(receptorArray[i][0] == 0.0){
-//						 receptorArray[i][0] = 0.1;
-//					 }
-//					 //System.out.println("333receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
-//					 
-//				 }
-//				 else{			   //don't hop
-//				    //System.out.println("333don't hop BEFORE: "+Arrays.deepToString(receptorArray));
-//				    receptorArray[i][2] = 0;
-//				    //receptorArray[i][2] = (0 + stepSize);
-//				    //System.out.println("333don't hop AFTER: "+Arrays.deepToString(receptorArray));
-//				 }
-//			 }
-//			 
-//			 //BOUNDARY CHECKING
-//			 else if(receptorArray[i][2] > height){
-//				 
-//				 
-//				 //System.out.println("444before hop x: "+receptorArray[i][1]);
-//				 //System.out.println("444before hop y: "+receptorArray[i][2]);
-//				 boolean hop = hopProbability();
-//				 if(hop == true){  //hop
-//		
-//					 //System.out.println("444receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
-//					 	
-//					 hopOutXLocationArray.add(receptorArray[i][1]);
-//					 hopOutYLocationArray.add((double) height);
-//					 hops++;
-//					 hopArray.add(hops);
-//					 hopTimeArray.add((double) mm*timeStep);
-//					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
-//					 if(receptorArray[i][0] == 1.0){
-//						 receptorArray[i][0] = 1.1;
-//					 }
-//					 else if(receptorArray[i][0] == 0.0){
-//						 receptorArray[i][0] = 0.1;
-//					 }
-//					 //System.out.println("444receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
-//					 
-//				 }
-//				 else{			   //don't hop
-//				  //System.out.println("444don't hop BEFORE: "+Arrays.deepToString(receptorArray));
-//				    receptorArray[i][2] = height;
-//				  //receptorArray[i][2] = (height - stepSize);
-//				    //System.out.println("444don't hop AFTER: "+Arrays.deepToString(receptorArray));
-//				 }
-//			 }  
+			 if(receptorArray[i][1] < 0){
+				 				 
+				 //System.out.println("111before hop x: "+receptorArray[i][1]);
+				//System.out.println("111before hop y: "+receptorArray[i][2]);
+				 boolean hop = hopProbability();
+				 if(hop == true){ //hop 
+					 
+					 //System.out.println("111receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));	 
+					 hopOutXLocationArray.add(0.0);
+					 hopOutYLocationArray.add(receptorArray[i][2]);
+					 hops++;
+					 hopArray.add(hops);
+					 hopTimeArray.add((double) mm*timeStep);			
+					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
+					 if(receptorArray[i][0] == 1.0){
+						 receptorArray[i][0] = 1.1;
+					 }
+					 else if(receptorArray[i][0] == 0.0){
+						 receptorArray[i][0] = 0.1;
+					 }
+					 //System.out.println("111receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
+					 
+				 }
+				 else{			  //don't hop
+				 //System.out.println("111don't hop BEFORE: "+Arrays.deepToString(receptorArray));
+				 receptorArray[i][1] = 0;
+				 //receptorArray[i][1] = (0 + stepSize);
+				 //System.out.println("111don't hop AFTER: "+Arrays.deepToString(receptorArray));
+				 }
+			 }
+			 
+			 //BOUNDARY CHECKING
+			 else if(receptorArray[i][1] > width){	
+				
+				 
+				 //System.out.println("222before hop x: "+receptorArray[i][1]);
+				 //System.out.println("222before hop y: "+receptorArray[i][2]);
+				 boolean hop = hopProbability();
+				 if(hop == true){  //hop
+					 
+					 //System.out.println("222receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
+							 
+					 hopOutXLocationArray.add((double) width);
+					 hopOutYLocationArray.add(receptorArray[i][2]);
+					 hops++;
+					 hopArray.add(hops);
+					 hopTimeArray.add((double) mm*timeStep);
+					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
+					 if(receptorArray[i][0] == 1.0){
+						 receptorArray[i][0] = 1.1;
+					 }
+					 else if(receptorArray[i][0] == 0.0){
+						 receptorArray[i][0] = 0.1;
+					 }
+					 //System.out.println("222receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
+					 
+				 }
+				 else{			   //don't hop
+					 //System.out.println("222don't hop BEFORE: "+Arrays.deepToString(receptorArray));
+					 receptorArray[i][1] = width;
+				     //receptorArray[i][1] = (width - stepSize);
+				 //System.out.println("222don't hop AFTER: "+Arrays.deepToString(receptorArray));
+				 }
+			 } 
+			 /////////////////receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
+			 
+			 //BOUNDARY CHECKING		
+			 if(receptorArray[i][2] < 0){
+				 
+				 
+				//System.out.println("333before hop x: "+receptorArray[i][1]);
+				//System.out.println("333before hop y: "+receptorArray[i][2]);
+				 boolean hop = hopProbability();
+				 if(hop == true){  //hop
+					 
+					//System.out.println("333receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
+				
+					 hopOutXLocationArray.add(receptorArray[i][1]);
+					 hopOutYLocationArray.add(0.0);
+					 hops++;
+					 hopArray.add(hops);
+					 hopTimeArray.add((double) mm*timeStep);
+					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
+					 if(receptorArray[i][0] == 1.0){
+						 receptorArray[i][0] = 1.1;
+					 }
+					 else if(receptorArray[i][0] == 0.0){
+						 receptorArray[i][0] = 0.1;
+					 }
+					 //System.out.println("333receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
+					 
+				 }
+				 else{			   //don't hop
+				    //System.out.println("333don't hop BEFORE: "+Arrays.deepToString(receptorArray));
+				    receptorArray[i][2] = 0;
+				    //receptorArray[i][2] = (0 + stepSize);
+				    //System.out.println("333don't hop AFTER: "+Arrays.deepToString(receptorArray));
+				 }
+			 }
+			 
+			 //BOUNDARY CHECKING
+			 else if(receptorArray[i][2] > height){
+				 
+				 
+				 //System.out.println("444before hop x: "+receptorArray[i][1]);
+				 //System.out.println("444before hop y: "+receptorArray[i][2]);
+				 boolean hop = hopProbability();
+				 if(hop == true){  //hop
+		
+					 //System.out.println("444receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
+					 	
+					 hopOutXLocationArray.add(receptorArray[i][1]);
+					 hopOutYLocationArray.add((double) height);
+					 hops++;
+					 hopArray.add(hops);
+					 hopTimeArray.add((double) mm*timeStep);
+					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
+					 if(receptorArray[i][0] == 1.0){
+						 receptorArray[i][0] = 1.1;
+					 }
+					 else if(receptorArray[i][0] == 0.0){
+						 receptorArray[i][0] = 0.1;
+					 }
+					 //System.out.println("444receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
+					 
+				 }
+				 else{			   //don't hop
+				  //System.out.println("444don't hop BEFORE: "+Arrays.deepToString(receptorArray));
+				    receptorArray[i][2] = height;
+				  //receptorArray[i][2] = (height - stepSize);
+				    //System.out.println("444don't hop AFTER: "+Arrays.deepToString(receptorArray));
+				 }
+			 }  
 ////////////////***zz		
-//			 xElements = receptorArray[i][1];//////////////////////////zz
-//			 yElements = receptorArray[i][2];//////////////////////////zz
-//			//System.out.println("moveArray size: "+(moveArray.length-1));
-//			//System.out.println("xElement: "+xElements);
-//					 
-//			 xArray.add(xElements);///////////////////////////////////zz
-//			 yArray.add(yElements);///////////////////////////////////zz
-//			//System.out.println("hopTimeArray: "+hopTimeArray);
-//			 // System.out.println("xArray is: ");
-//			// System.out.println(xArray);
+			 xElements = receptorArray[i][1];//////////////////////////zz
+			 yElements = receptorArray[i][2];//////////////////////////zz
+			//System.out.println("moveArray size: "+(moveArray.length-1));
+			//System.out.println("xElement: "+xElements);
+					 
+			 xArray.add(xElements);///////////////////////////////////zz
+			 yArray.add(yElements);///////////////////////////////////zz
+			//System.out.println("hopTimeArray: "+hopTimeArray);
+			 // System.out.println("xArray is: ");
+			// System.out.println(xArray);
 ////////////////***zz			 
 			 
 		 }/////////** END OF if(0.0f or 1.0f)**////////
@@ -1309,180 +1310,180 @@ public static void checkHopArray(int index){
 			  
 			  
 				 //BOUNDARY CHECKING
-//				 if(receptorArray[i][1] < width && receptorArray[i][1] > 0 && receptorArray[i][2] > 0 
-//						 && receptorArray[i][2] < height && previousReceptorArray[i][1] <= 0){ //hop in from right
-//					 				 
-//					 //System.out.println("111before hop x: "+receptorArray[i][1]);
-//					//System.out.println("111before hop y: "+receptorArray[i][2]);
-//					 boolean hop = hopProbability();
-//					 if(hop == true){ //hop inside
-//						 									 
-//						//System.out.println("555prevRecArray BEFORE hop: "+Arrays.deepToString(previousReceptorArray));
-//						//System.out.println("555receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
-//						 				 
-//						 hopInXLocationArray.add(0.0);
-//						 hopInYLocationArray.add(receptorArray[i][2]);
-//						 hops++;
-//						 hopArray.add(hops);
-//						 hopTimeArray.add((double) mm*timeStep);			
-//						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
-//						 if(receptorArray[i][0] == 1.1){
-//							 receptorArray[i][0] = 1.0;
-//						 }
-//						 else if(receptorArray[i][0] == 0.1){
-//							 receptorArray[i][0] = 0.0;
-//						 }
-//						 //System.out.println("555prevRecArray AFTER hop: "+Arrays.deepToString(previousReceptorArray));
-//						 //System.out.println("555receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
-//						 
-//					 }
-//					 else{			  //don't hop
-//					
-//						 //System.out.println("555don't hop BEFORE correction: "+Arrays.deepToString(receptorArray));
-//						 
-//						 receptorArray[i][1] = 0;
-//						 //receptorArray[i][1] = (0 + stepSize);
-//					 //System.out.println("555don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
-//					 }
-//				 }
-//				 
-//				 //BOUNDARY CHECKING
-//				 else if(receptorArray[i][1] < width && receptorArray[i][1] > 0 && receptorArray[i][2] > 0 
-//						 && receptorArray[i][2] < height && previousReceptorArray[i][1] >= width){	//hop in from left
-//					
-//					 
-//					 //System.out.println("222before hop x: "+receptorArray[i][1]);
-//					 //System.out.println("222before hop y: "+receptorArray[i][2]);
-//					 boolean hop = hopProbability();
-//					 if(hop == true){  //hop inside
-//						 //System.out.println("666prevRecArray BEFORE hop: "+Arrays.deepToString(previousReceptorArray));
-//						 //System.out.println("666receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
-//									 
-//						 hopInXLocationArray.add((double) width);
-//						 hopInYLocationArray.add(receptorArray[i][2]);
-//						 hops++;
-//						 hopArray.add(hops);
-//						 hopTimeArray.add((double) mm*timeStep);
-//						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
-//						 if(receptorArray[i][0] == 1.1){
-//							 receptorArray[i][0] = 1.0;
-//						 }
-//						 else if(receptorArray[i][0] == 0.1){
-//							 receptorArray[i][0] = 0.0;
-//						 }
-//						 //System.out.println("666prevRecArray AFTER hop: "+Arrays.deepToString(previousReceptorArray));
-//						 //System.out.println("666receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
-//						 
-//					 }
-//					 else{			   //don't hop
-//						 //System.out.println("666don't hop BEFORE correction: "+Arrays.deepToString(receptorArray));
-//					receptorArray[i][1] = width;
-//					//receptorArray[i][1] = (width + stepSize);
-//					 //System.out.println("666don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
-//					 }
-//				 } 
-//				 /////////////////receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
-//				 
-//				 //BOUNDARY CHECKING		
-//				 if(receptorArray[i][2] > 0 && receptorArray[i][2] < height && receptorArray[i][1] > 0 
-//						 && receptorArray[i][1] < width && previousReceptorArray[i][2] <= 0){  //hop in from bottom
-//					 
-//					 
-//					//System.out.println("333before hop x: "+receptorArray[i][1]);
-//					//System.out.println("333before hop y: "+receptorArray[i][2]);
-//					 boolean hop = hopProbability();
-//					 if(hop == true){  //hop inside
-//						//System.out.println("777prevRecArray BEFORE hop: "+Arrays.deepToString(previousReceptorArray));
-//						//System.out.println("777receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
-//											 
-//						 hopInXLocationArray.add(receptorArray[i][1]);
-//						 hopInYLocationArray.add(0.0);
-//						 hops++;
-//						 hopArray.add(hops);
-//						 hopTimeArray.add((double) mm*timeStep);
-//						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
-//						 if(receptorArray[i][0] == 1.1){
-//							 receptorArray[i][0] = 1.0;
-//						 }
-//						 else if(receptorArray[i][0] == 0.1){
-//							 receptorArray[i][0] = 0.0;
-//						 }
-//						 //System.out.println("777prevRecArray AFTER hop: "+Arrays.deepToString(previousReceptorArray));
-//						 //System.out.println("777receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
-//						 
-//					 }
-//					 else{			   //don't hop
-//						 //System.out.println("777don't hop BEFORE correction: "+Arrays.deepToString(receptorArray));
-//						 receptorArray[i][2] = 0;
-//						 //receptorArray[i][2] = (0 - stepSize);
-//					 //System.out.println("777don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
-//					 }
-//				 }
-//				 
-//				 //BOUNDARY CHECKING
-//				 else if(receptorArray[i][2] < height && receptorArray[i][2] > 0 && receptorArray[i][1] > 0
-//						 && receptorArray[i][1] < width && previousReceptorArray[i][2] >= height){ //hop in from top
-//					 
-//					 
-//					 //System.out.println("444before hop x: "+receptorArray[i][1]);
-//					 //System.out.println("444before hop y: "+receptorArray[i][2]);
-//					 boolean hop = hopProbability();
-//					 if(hop == true){  //hop inside
-//						 //System.out.println("888prevRecArray BEFORE hop: "+Arrays.deepToString(previousReceptorArray));
-//						 //System.out.println("888receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
-//						
-//						 
-//						 hopInXLocationArray.add(receptorArray[i][1]);
-//						 hopInYLocationArray.add((double) height);
-//						 hops++;
-//						 hopArray.add(hops);
-//						 hopTimeArray.add((double) mm*timeStep);
-//						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
-//						 if(receptorArray[i][0] == 1.1){
-//							 receptorArray[i][0] = 1.0;
-//						 }
-//						 else if(receptorArray[i][0] == 0.1){
-//							 receptorArray[i][0] = 0.0;
-//						 }
-//						// System.out.println("888prevRecArray AFTER hop: "+Arrays.deepToString(previousReceptorArray));
-//						// System.out.println("888receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
-//						 
-//					 }
-//					 else{			   //don't hop
-//					// System.out.println("888don't hop BEFORE correction: "+Arrays.deepToString(receptorArray));
-//					 receptorArray[i][2] = height;
-//					 //receptorArray[i][2] = (height+ stepSize);
-//					// System.out.println("888don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
-//					 }
-//				 }  
-//		//Boundary conditions if goes past outer edge, disappears and generate new at random edge location
-//				 else if(receptorArray[i][1] < (0 - gap)){  //pass left edge				 
-//					 edgeGeneration(i);
-//					 
-//				 }
-//				 else if(receptorArray[i][1] > (width + gap)){  //pass right edge
-//					 edgeGeneration(i);
-//				 }
-//				 else if(receptorArray[i][2] < (0 - gap)){  //pass bottom edge
-//					 edgeGeneration(i);
-//				 }
-//				 else if(receptorArray[i][2] > (height + gap)){  //pass top edge
-//					 edgeGeneration(i);
-//				 }
+				 if(receptorArray[i][1] < width && receptorArray[i][1] > 0 && receptorArray[i][2] > 0 
+						 && receptorArray[i][2] < height && previousReceptorArray[i][1] <= 0){ //hop in from right
+					 				 
+					 //System.out.println("111before hop x: "+receptorArray[i][1]);
+					//System.out.println("111before hop y: "+receptorArray[i][2]);
+					 boolean hop = hopProbability();
+					 if(hop == true){ //hop inside
+						 									 
+						//System.out.println("555prevRecArray BEFORE hop: "+Arrays.deepToString(previousReceptorArray));
+						//System.out.println("555receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
+						 				 
+						 hopInXLocationArray.add(0.0);
+						 hopInYLocationArray.add(receptorArray[i][2]);
+						 hops++;
+						 hopArray.add(hops);
+						 hopTimeArray.add((double) mm*timeStep);			
+						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
+						 if(receptorArray[i][0] == 1.1){
+							 receptorArray[i][0] = 1.0;
+						 }
+						 else if(receptorArray[i][0] == 0.1){
+							 receptorArray[i][0] = 0.0;
+						 }
+						 //System.out.println("555prevRecArray AFTER hop: "+Arrays.deepToString(previousReceptorArray));
+						 //System.out.println("555receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
+						 
+					 }
+					 else{			  //don't hop
+					
+						 //System.out.println("555don't hop BEFORE correction: "+Arrays.deepToString(receptorArray));
+						 
+						 receptorArray[i][1] = 0;
+						 //receptorArray[i][1] = (0 + stepSize);
+					 //System.out.println("555don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
+					 }
+				 }
+				 
+				 //BOUNDARY CHECKING
+				 else if(receptorArray[i][1] < width && receptorArray[i][1] > 0 && receptorArray[i][2] > 0 
+						 && receptorArray[i][2] < height && previousReceptorArray[i][1] >= width){	//hop in from left
+					
+					 
+					 //System.out.println("222before hop x: "+receptorArray[i][1]);
+					 //System.out.println("222before hop y: "+receptorArray[i][2]);
+					 boolean hop = hopProbability();
+					 if(hop == true){  //hop inside
+						 //System.out.println("666prevRecArray BEFORE hop: "+Arrays.deepToString(previousReceptorArray));
+						 //System.out.println("666receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
+									 
+						 hopInXLocationArray.add((double) width);
+						 hopInYLocationArray.add(receptorArray[i][2]);
+						 hops++;
+						 hopArray.add(hops);
+						 hopTimeArray.add((double) mm*timeStep);
+						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
+						 if(receptorArray[i][0] == 1.1){
+							 receptorArray[i][0] = 1.0;
+						 }
+						 else if(receptorArray[i][0] == 0.1){
+							 receptorArray[i][0] = 0.0;
+						 }
+						 //System.out.println("666prevRecArray AFTER hop: "+Arrays.deepToString(previousReceptorArray));
+						 //System.out.println("666receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
+						 
+					 }
+					 else{			   //don't hop
+						 //System.out.println("666don't hop BEFORE correction: "+Arrays.deepToString(receptorArray));
+					receptorArray[i][1] = width;
+					//receptorArray[i][1] = (width + stepSize);
+					 //System.out.println("666don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
+					 }
+				 } 
+				 /////////////////receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
+				 
+				 //BOUNDARY CHECKING		
+				 if(receptorArray[i][2] > 0 && receptorArray[i][2] < height && receptorArray[i][1] > 0 
+						 && receptorArray[i][1] < width && previousReceptorArray[i][2] <= 0){  //hop in from bottom
+					 
+					 
+					//System.out.println("333before hop x: "+receptorArray[i][1]);
+					//System.out.println("333before hop y: "+receptorArray[i][2]);
+					 boolean hop = hopProbability();
+					 if(hop == true){  //hop inside
+						//System.out.println("777prevRecArray BEFORE hop: "+Arrays.deepToString(previousReceptorArray));
+						//System.out.println("777receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
+											 
+						 hopInXLocationArray.add(receptorArray[i][1]);
+						 hopInYLocationArray.add(0.0);
+						 hops++;
+						 hopArray.add(hops);
+						 hopTimeArray.add((double) mm*timeStep);
+						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
+						 if(receptorArray[i][0] == 1.1){
+							 receptorArray[i][0] = 1.0;
+						 }
+						 else if(receptorArray[i][0] == 0.1){
+							 receptorArray[i][0] = 0.0;
+						 }
+						 //System.out.println("777prevRecArray AFTER hop: "+Arrays.deepToString(previousReceptorArray));
+						 //System.out.println("777receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
+						 
+					 }
+					 else{			   //don't hop
+						 //System.out.println("777don't hop BEFORE correction: "+Arrays.deepToString(receptorArray));
+						 receptorArray[i][2] = 0;
+						 //receptorArray[i][2] = (0 - stepSize);
+					 //System.out.println("777don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
+					 }
+				 }
+				 
+				 //BOUNDARY CHECKING
+				 else if(receptorArray[i][2] < height && receptorArray[i][2] > 0 && receptorArray[i][1] > 0
+						 && receptorArray[i][1] < width && previousReceptorArray[i][2] >= height){ //hop in from top
+					 
+					 
+					 //System.out.println("444before hop x: "+receptorArray[i][1]);
+					 //System.out.println("444before hop y: "+receptorArray[i][2]);
+					 boolean hop = hopProbability();
+					 if(hop == true){  //hop inside
+						 //System.out.println("888prevRecArray BEFORE hop: "+Arrays.deepToString(previousReceptorArray));
+						 //System.out.println("888receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
+						
+						 
+						 hopInXLocationArray.add(receptorArray[i][1]);
+						 hopInYLocationArray.add((double) height);
+						 hops++;
+						 hopArray.add(hops);
+						 hopTimeArray.add((double) mm*timeStep);
+						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
+						 if(receptorArray[i][0] == 1.1){
+							 receptorArray[i][0] = 1.0;
+						 }
+						 else if(receptorArray[i][0] == 0.1){
+							 receptorArray[i][0] = 0.0;
+						 }
+						// System.out.println("888prevRecArray AFTER hop: "+Arrays.deepToString(previousReceptorArray));
+						// System.out.println("888receptorArray AFTER hop: "+Arrays.deepToString(receptorArray));
+						 
+					 }
+					 else{			   //don't hop
+					// System.out.println("888don't hop BEFORE correction: "+Arrays.deepToString(receptorArray));
+					 receptorArray[i][2] = height;
+					 //receptorArray[i][2] = (height+ stepSize);
+					// System.out.println("888don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
+					 }
+				 }  
+		//Boundary conditions if goes past outer edge, disappears and generate new at random edge location
+				 else if(receptorArray[i][1] < (0 - gap)){  //pass left edge				 
+					 edgeGeneration(i);
+					 
+				 }
+				 else if(receptorArray[i][1] > (width + gap)){  //pass right edge
+					 edgeGeneration(i);
+				 }
+				 else if(receptorArray[i][2] < (0 - gap)){  //pass bottom edge
+					 edgeGeneration(i);
+				 }
+				 else if(receptorArray[i][2] > (height + gap)){  //pass top edge
+					 edgeGeneration(i);
+				 }
 				 
 //////////////***END OF BOUNDARY CONDITIONS***///////////////////////////
 
 /////////////////***zz				 
-//				 xElements = receptorArray[i][1];//////////////////////////zz
-//				 yElements = receptorArray[i][2];//////////////////////////zz
-//				//System.out.println("moveArray size: "+(moveArray.length-1));
-//				//System.out.println("xElement: "+xElements);
-//						 
-//				 xArray.add(xElements);///////////////////////////////////zz
-//				 yArray.add(yElements);///////////////////////////////////zz
-//				//System.out.println("hopTimeArray: "+hopTimeArray);
-//				 // System.out.println("xArray is: ");
-//				// System.out.println(xArray);
+				 xElements = receptorArray[i][1];//////////////////////////zz
+				 yElements = receptorArray[i][2];//////////////////////////zz
+				//System.out.println("moveArray size: "+(moveArray.length-1));
+				//System.out.println("xElement: "+xElements);
+						 
+				 xArray.add(xElements);///////////////////////////////////zz
+				 yArray.add(yElements);///////////////////////////////////zz
+				//System.out.println("hopTimeArray: "+hopTimeArray);
+				 // System.out.println("xArray is: ");
+				// System.out.println(xArray);
 /////////////////***zz				 
 				 
 			 }///////// **END OF if(0.1f or 1.1f)**/////// 
@@ -1780,15 +1781,15 @@ public static void checkHopArray(int index){
 	 
 	 public static void plotTrajectory(){
 /////////////////////////////////////////zz 
-//		 ArrayList<ArrayList<Double>> xFinalArray = new ArrayList<ArrayList<Double>>(); 
-//		 ArrayList<ArrayList<Double>> yFinalArray = new ArrayList<ArrayList<Double>>(); 
-//	
-//		 double xP = 0.0;
-//		 double yP = 0.0;
-//		
-//		 double[][] xPlot = new double[nReceptors][move];
-//		 double[][] yPlot = new double[nReceptors][move];
-//	
+		 ArrayList<ArrayList<Double>> xFinalArray = new ArrayList<ArrayList<Double>>(); 
+		 ArrayList<ArrayList<Double>> yFinalArray = new ArrayList<ArrayList<Double>>(); 
+	
+		 double xP = 0.0;
+		 double yP = 0.0;
+		
+		 double[][] xPlot = new double[nReceptors][move];
+		 double[][] yPlot = new double[nReceptors][move];
+	
 /////////////////////////////////////////zz
 	 
 		 double xOutL = 0.0;
@@ -1822,82 +1823,82 @@ public static void checkHopArray(int index){
 		 //System.out.println("Before even/odd for loop xArray: "+xArray);
 		 //System.out.println("Before even/odd for loop yArray: "+yArray);
 /////////////////////////////////////////zz
-//		 if((xArray.size())%2 == 0){  //even
-//		 	for(int i = 0; i <= nReceptors - 1; i++){
-//		 		
-//		 		//create new array for each ith set of positions
-//		 		ArrayList<Double> xFinalInnerArray = new ArrayList<Double>(); 
-//		 		ArrayList<Double> yFinalInnerArray = new ArrayList<Double>(); 
-//		 		for(int j = 0 + i; j <= xArray.size() - 1; j+= nReceptors){
-//				 
-//		 			//System.out.println("even");
-//		 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j + " i = "+i);
-//		 			
-//		 			xFinalInnerArray.add(xArray.get(j));
-//		 			yFinalInnerArray.add(yArray.get(j));
-//		 			
-//		 		}
-//		 	//System.out.println("xFinalInnerArray: " +xFinalInnerArray);
-//		 	//System.out.println("yFinalInnerArray: "+yFinalInnerArray);
-//		 	xFinalArray.add(xFinalInnerArray);
-//		 	yFinalArray.add(yFinalInnerArray);
-//		 	//System.out.println("xFinalArray: "+xFinalArray);
-//		 	//System.out.println("yFinalArray: "+yFinalArray);
-//		 	}
-//		 	//System.out.println("aaaxFinalArray: "+xFinalArray);
-//			//System.out.println("aaayFinalArray: "+yFinalArray);
-//		 }
-//		 	 
-//		 else{    //odd
-//			 for(int i = 0; i <= nReceptors - 1; i++){
-//				 
-//				//create new array for each ith set of positions
-//		 		 ArrayList<Double> xFinalInnerArray = new ArrayList<Double>(); 
-//		 		 ArrayList<Double> yFinalInnerArray = new ArrayList<Double>(); 
-//		 		 
-//			 		for(int j = 0 + i; j <= (xArray.size() - (nReceptors - a )); j+= nReceptors){
-//					 
-//			 			//System.out.println("odd");
-//			 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j+ " i = "+i);
-//			 			
-//			 			xFinalInnerArray.add(xArray.get(j));////////
-//			 			yFinalInnerArray.add(yArray.get(j));
-//					
-//				 }
-//			 		//System.out.println("a: "+a);
-//			 		a++;
-//			 		//System.out.println("xFinalInnerArray:" +xFinalInnerArray);
-//				 	xFinalArray.add(xFinalInnerArray);
-//				 	yFinalArray.add(yFinalInnerArray);
-//				 	//System.out.println("xFinalArray: "+xFinalArray);
-//				 	//System.out.println("yFinalArray: "+yFinalArray);
-//			 }
-//		 } 
-//
-//		 
-//		//System.out.println("bbbxFinalArray: "+xFinalArray);
-//		//System.out.println("bbbyFinalArray: "+yFinalArray);
-//		
-//		 	
-//	for(int i = 0; i<=xFinalArray.size() - 1; i++){	 	
-//	
-//		 Double[] xO = xFinalArray.get(i).toArray(new Double[xFinalArray.size()]);
-//		 Double[] yO = yFinalArray.get(i).toArray(new Double[yFinalArray.size()]);
-//		 
-//		 for(int j = 0; j <= xFinalArray.get(i).size() - 1; j++){
-//						
-//			// System.out.println("xO: "+xO[j]);
-//			// System.out.println("yO: "+yO[j]);
-//			 xP = xO[j].doubleValue();
-//			 yP = yO[j].doubleValue();
-//			 
-//			 xPlot[i][j] = xP;
-//			 yPlot[i][j] = yP;
-//			 //System.out.println("xP: "+xP);
-//			 //System.out.println("yP: "+yP);
-//			 
-//		 }
-//	}	/////////////////////////////////////////zz
+		 if((xArray.size())%2 == 0){  //even
+		 	for(int i = 0; i <= nReceptors - 1; i++){
+		 		
+		 		//create new array for each ith set of positions
+		 		ArrayList<Double> xFinalInnerArray = new ArrayList<Double>(); 
+		 		ArrayList<Double> yFinalInnerArray = new ArrayList<Double>(); 
+		 		for(int j = 0 + i; j <= xArray.size() - 1; j+= nReceptors){
+				 
+		 			//System.out.println("even");
+		 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j + " i = "+i);
+		 			
+		 			xFinalInnerArray.add(xArray.get(j));
+		 			yFinalInnerArray.add(yArray.get(j));
+		 			
+		 		}
+		 	//System.out.println("xFinalInnerArray: " +xFinalInnerArray);
+		 	//System.out.println("yFinalInnerArray: "+yFinalInnerArray);
+		 	xFinalArray.add(xFinalInnerArray);
+		 	yFinalArray.add(yFinalInnerArray);
+		 	//System.out.println("xFinalArray: "+xFinalArray);
+		 	//System.out.println("yFinalArray: "+yFinalArray);
+		 	}
+		 	//System.out.println("aaaxFinalArray: "+xFinalArray);
+			//System.out.println("aaayFinalArray: "+yFinalArray);
+		 }
+		 	 
+		 else{    //odd
+			 for(int i = 0; i <= nReceptors - 1; i++){
+				 
+				//create new array for each ith set of positions
+		 		 ArrayList<Double> xFinalInnerArray = new ArrayList<Double>(); 
+		 		 ArrayList<Double> yFinalInnerArray = new ArrayList<Double>(); 
+		 		 
+			 		for(int j = 0 + i; j <= (xArray.size() - (nReceptors - a )); j+= nReceptors){
+					 
+			 			//System.out.println("odd");
+			 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j+ " i = "+i);
+			 			
+			 			xFinalInnerArray.add(xArray.get(j));////////
+			 			yFinalInnerArray.add(yArray.get(j));
+					
+				 }
+			 		//System.out.println("a: "+a);
+			 		a++;
+			 		//System.out.println("xFinalInnerArray:" +xFinalInnerArray);
+				 	xFinalArray.add(xFinalInnerArray);
+				 	yFinalArray.add(yFinalInnerArray);
+				 	//System.out.println("xFinalArray: "+xFinalArray);
+				 	//System.out.println("yFinalArray: "+yFinalArray);
+			 }
+		 } 
+
+		 
+		//System.out.println("bbbxFinalArray: "+xFinalArray);
+		//System.out.println("bbbyFinalArray: "+yFinalArray);
+		
+		 	
+	for(int i = 0; i<=xFinalArray.size() - 1; i++){	 	
+	
+		 Double[] xO = xFinalArray.get(i).toArray(new Double[xFinalArray.size()]);
+		 Double[] yO = yFinalArray.get(i).toArray(new Double[yFinalArray.size()]);
+		 
+		 for(int j = 0; j <= xFinalArray.get(i).size() - 1; j++){
+						
+			// System.out.println("xO: "+xO[j]);
+			// System.out.println("yO: "+yO[j]);
+			 xP = xO[j].doubleValue();
+			 yP = yO[j].doubleValue();
+			 
+			 xPlot[i][j] = xP;
+			 yPlot[i][j] = yP;
+			 //System.out.println("xP: "+xP);
+			 //System.out.println("yP: "+yP);
+			 
+		 }
+	}	/////////////////////////////////////////zz
 //System.out.println("xPlot"+Arrays.deepToString(xPlot));
 //System.out.println("yPlot"+Arrays.deepToString(yPlot));
 
@@ -1937,8 +1938,8 @@ public static void checkHopArray(int index){
 	
 		//System.out.println("R1 first point: "+xPlot[0][1]+" , "+yPlot[0][2]);
 	
-		 //Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)",xPlot[0],yPlot[0]);//zz
-		 Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)");
+		 Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)",xPlot[0],yPlot[0]);//zz
+		 //Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)");
 
 		 
 		 //draw inner boundary 
