@@ -20,8 +20,8 @@ static final int width = 75;	   //150   //300
 static final int gap = 10;
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final double stepSize = 0.5;  //1.0   //0.5
-static final int move = 40000000; //move n positions   //50,000,000
-static final int nReceptors = 5; //should not exceed height*width 
+static final int move = 10; //move n positions   //50,000,000
+static final int nReceptors = 3; //should not exceed height*width 
 static final int hopProb = 5; //0 to 100   //**if confining to inner boundary only, change eventCheck()
 static final double concentration = 1.0; //M     //0.000001   0.0000000052f  K_off / K_on
 static final double kOn = 0.5;   //M^-1 * s^-1   //270000.0;  3000000.0
@@ -41,6 +41,7 @@ static final double[][] stepArray = new double[nReceptors][3];
 static final double[][] stateArray = new double[nReceptors][move];
 //static final double[][] copyTotalTimeArray = new double[nReceptors][move];
 static final double[] totalTimeArray = new double[move];
+
 
 //optimization--> only take every 10th, 100th, etc. coordinate instead of all
 static ArrayList<Double> xArray = new ArrayList<Double>();
@@ -63,7 +64,7 @@ static ArrayList<Double> hopInYLocationArray = new ArrayList<Double>();
 
 static ArrayList<Double> eventXLocationArray = new ArrayList<Double>();
 static ArrayList<Double> eventYLocationArray = new ArrayList<Double>();
-
+static ArrayList<Double> eventArray = new ArrayList<Double>();
 static double xElements = 0.0;
 static double yElements = 0.0;
 static double timePoint = 0.0;
@@ -74,12 +75,14 @@ static double hops = 0.0;
 
 static int a = 0;  
 
-static ArrayList<Double> eventArray = new ArrayList<Double>();
+
 static double events = 0;
 
 
 	public static void main(String args[]) throws IOException{
 		
+		for(int i = 0; i <=iterations - 1; i++){
+			
 		Thread t1 = new Thread(new Runnable(){
 			
 			@Override
@@ -248,7 +251,7 @@ static double events = 0;
 			//System.out.println("totalTime: "+totalTime);
 			//System.out.println("totalTimeArray: "+Arrays.toString(totalTimeArray));
 			
-			
+			//System.out.println("receptorArray: "+Arrays.deepToString(receptorArray));
 			
 			}  /////////////////////////////end of move for loop
 	
@@ -280,8 +283,41 @@ static double events = 0;
 				plotHop();
 				plotStates();
 				//plotStateChanges();
-			
 				
+		//	System.out.println("CLEAR");
+//////////////////////////////////////////////////CLEAR
+	//static array elements just get replaced by new ones, no need to make new ones
+				
+	xArray.clear();
+	yArray.clear();
+	xOutArray.clear();
+	yOutArray.clear();
+	collisionArray.clear();
+	timePointArray.clear();
+	collisionPerTimeArray.clear();
+	switchStateArray.clear();
+	switchTimeArray.clear();
+	hopArray.clear();
+	hopTimeArray.clear();
+	hopOutXLocationArray.clear();
+	hopOutYLocationArray.clear();
+	hopInXLocationArray.clear();
+	hopInYLocationArray.clear();
+	eventXLocationArray.clear();
+	eventYLocationArray.clear();
+	eventArray.clear();
+	
+	xElements = 0.0;
+	yElements = 0.0;
+	timePoint = 0.0;
+	eventPerTime = 0.0;
+	totalTime = 0.0;
+	hops = 0.0;
+	a = 0;		
+	events = 0;
+				
+						
+//////////////////////////////////////////////////END OF CLEAR
 				
 				//System.out.println(switchStateArray);
 				long endTime2 =  System.currentTimeMillis();
@@ -301,7 +337,7 @@ static double events = 0;
 			e.printStackTrace();
 		}
 								
-				
+	}			
 	}	//main end
 	
 	 public static synchronized void initialArray(){
@@ -1857,15 +1893,15 @@ public static void checkHopArray(int index){
 	 
 	 public static void plotTrajectory(){
 /////////////////////////////////////////zz 
-		 ArrayList<ArrayList<Double>> xFinalArray = new ArrayList<ArrayList<Double>>(); 
-		 ArrayList<ArrayList<Double>> yFinalArray = new ArrayList<ArrayList<Double>>(); 
-	
-		 double xP = 0.0;
-		 double yP = 0.0;
-		
-		 double[][] xPlot = new double[nReceptors][move];
-		 double[][] yPlot = new double[nReceptors][move];
-	
+//		 ArrayList<ArrayList<Double>> xFinalArray = new ArrayList<ArrayList<Double>>(); 
+//		 ArrayList<ArrayList<Double>> yFinalArray = new ArrayList<ArrayList<Double>>(); 
+//	
+//		 double xP = 0.0;
+//		 double yP = 0.0;
+//		
+//		 double[][] xPlot = new double[nReceptors][move];
+//		 double[][] yPlot = new double[nReceptors][move];
+//	
 /////////////////////////////////////////zz
 	 
 		 double xOutL = 0.0;
@@ -1987,6 +2023,8 @@ public static void checkHopArray(int index){
 		xOutLocation[i] = xOutL;
 		yOutLocation[i] = yOutL;		
 	}
+	
+	System.out.println(xOutLocation.length);
 
 //Hopping in
 	for(int i = 0; i <= hopInXLocationArray.size() - 1; i++){
@@ -2109,24 +2147,24 @@ public static void checkHopArray(int index){
 			DataOutputStream dsTraj = new DataOutputStream(basTraj);
 			
 			try {
-				for(int i = 0; i <= xPlot.length - 1; i++){
-					for(int j = 0; j <=xPlot[i].length - 1; j++){
-						dsTraj.writeFloat((float) xPlot[i][j] );
-						dsTraj.writeFloat((float) yPlot[i][j] );
-					}
-				
-				}
+//				for(int i = 0; i <= xPlot.length - 1; i++){
+//					for(int j = 0; j <=xPlot[i].length - 1; j++){
+//						dsTraj.writeFloat((float) xPlot[i][j] );
+//						dsTraj.writeFloat((float) yPlot[i][j] );
+//					}
+//				
+//				}
 				for(int i = 0; i <=xEvent.length - 1; i++){
 					dsTraj.writeFloat( (float) xEvent[i]);
 					dsTraj.writeFloat( (float) yEvent[i]);
 				}
-				for(int i = 0; i <=xOutLocation.length - 1; i++){
+				for(int i = 0; i <=xInLocation.length - 1; i++){
 					dsTraj.writeFloat( (float) xInLocation[i]);
 					dsTraj.writeFloat( (float) yInLocation[i]);
 				}
-				for(int i = 0; i <=xInLocation.length - 1; i++){
+				for(int i = 0; i <=xOutLocation.length - 1; i++){
 					dsTraj.writeFloat( (float) xOutLocation[i]);
-					dsTraj.writeFloat( (float) xInLocation[i]);
+					dsTraj.writeFloat( (float) yOutLocation[i]);
 				}
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
