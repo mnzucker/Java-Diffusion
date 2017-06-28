@@ -2,6 +2,7 @@
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,8 +21,8 @@ static final int width = 75;	   //150   //300
 static final int gap = 10;
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final double stepSize = 0.5;  //1.0   //0.5
-static final int move = 10; //move n positions   //50,000,000
-static final int nReceptors = 3; //should not exceed height*width 
+static final int move = 1000000; //move n positions   //50,000,000
+static final int nReceptors = 4; //should not exceed height*width 
 static final int hopProb = 5; //0 to 100   //**if confining to inner boundary only, change eventCheck()
 static final double concentration = 1.0; //M     //0.000001   0.0000000052f  K_off / K_on
 static final double kOn = 0.5;   //M^-1 * s^-1   //270000.0;  3000000.0
@@ -29,7 +30,7 @@ static final double kOff = 0.5;  //s^1       3800.0     //0.00014;
 static final double timeStep = 1.0; //0.0000003; //seconds
 static final int eventInterval = 100000;  //  interval based on move, not move*steps
 static final int generateActive = 50;
-static final int iterations = 2;
+static final int iterations = 50;
 ///////////////////////////////////////////////////////////////
 
 //optimization --> track state changes at time points for state and time arrays instead of saving all moves
@@ -71,24 +72,21 @@ static double timePoint = 0.0;
 static double eventPerTime = 0.0;
 static double totalTime = 0.0;
 static double hops = 0.0;
-
-
 static int a = 0;  
-
-
 static double events = 0;
+static int iterationNumber = 0;
 
 
 	public static void main(String args[]) throws IOException{
 		
 		for(int i = 0; i <=iterations - 1; i++){
-			
+		
 		Thread t1 = new Thread(new Runnable(){
 			
 			@Override
 			public void run(){
 				long startTime1 =  System.currentTimeMillis();
-						
+		
 				
 				initialArray();
 			
@@ -138,7 +136,7 @@ static double events = 0;
 					
 						int m = i;
 						if(m%100000 == 0){
-						System.out.println("m: "+m);
+						//System.out.println("m: "+m);
 						}
 						
 						movementArray(m);	
@@ -283,7 +281,9 @@ static double events = 0;
 				plotHop();
 				plotStates();
 				//plotStateChanges();
-				
+			System.out.println("iterationNumber: "+iterationNumber);
+			iterationNumber++;	
+			
 		//	System.out.println("CLEAR");
 //////////////////////////////////////////////////CLEAR
 	//static array elements just get replaced by new ones, no need to make new ones
@@ -2024,7 +2024,7 @@ public static void checkHopArray(int index){
 		yOutLocation[i] = yOutL;		
 	}
 	
-	System.out.println(xOutLocation.length);
+
 
 //Hopping in
 	for(int i = 0; i <= hopInXLocationArray.size() - 1; i++){
@@ -2089,7 +2089,7 @@ public static void checkHopArray(int index){
 		 positionPlot.setColor(Color.BLACK); 
 		 positionPlot.setLineWidth(2);
 		  
-		 positionPlot.show();  
+		 //positionPlot.show();  
 		 
 		 //additional data sets
 		 //set methods apply to the first data set it encounters
@@ -2136,9 +2136,25 @@ public static void checkHopArray(int index){
 		 
 ////////////////////////WRITE
 		 FileOutputStream fileOSTraj = null;
+		 String filePathTraj = "C:\\Users\\Mike\\Desktop\\JavaOutput\\PositionPlot.bin";
+		 
+		 File f = new File(filePathTraj);
+		 if(f.exists() && !f.isDirectory()){
+			 //System.out.println(filePathTraj+ " exists");
+			 StringBuilder newPath = new StringBuilder(filePathTraj);
+			 newPath.delete(filePathTraj.length() - 4, filePathTraj.length());
+			 //System.out.println(newPath.toString());
+			 String iterationString = Integer.toString(iterationNumber);
+			 newPath.append(iterationString + ".bin");
+			 //System.out.println(newPath.toString());
+			filePathTraj = newPath.toString();
+			//System.out.println(filePathTraj);
+		 }
+		 
 			try {
-				fileOSTraj = new FileOutputStream("C:\\Users\\Mike\\Desktop\\JavaOutput\\PositionPlot.bin");
-			
+				fileOSTraj = new FileOutputStream(filePathTraj);
+			 
+				
 			} catch (FileNotFoundException e1) {
 				
 				e1.printStackTrace();
@@ -2225,7 +2241,7 @@ public static void checkHopArray(int index){
 		eventPlot.setColor(Color.RED);
 		eventPlot.addPoints(xEvent, yEvent, 0);
 		
-		eventPlot.show();
+		//eventPlot.show();
 		
 		
 
@@ -2233,13 +2249,28 @@ public static void checkHopArray(int index){
 		eventChangePlot.setLineWidth(2);
 		eventChangePlot.setColor(Color.BLUE);
 		eventChangePlot.addPoints(xEvent, yEventChange, 0);
-		eventChangePlot.show();
+		
+		//eventChangePlot.show();
 		
 //////////////////////////WRITE
 		
 		FileOutputStream fileOSEvent = null;
+ String filePathEvent = "C:\\Users\\Mike\\Desktop\\JavaOutput\\EventPlot.bin";
+		 
+		 File f = new File(filePathEvent);
+		 if(f.exists() && !f.isDirectory()){
+			 //System.out.println(filePathEvent+ " exists");
+			 StringBuilder newPath = new StringBuilder(filePathEvent);
+			 newPath.delete(filePathEvent.length() - 4, filePathEvent.length());
+			 //System.out.println(newPath.toString());
+			 String iterationString = Integer.toString(iterationNumber);
+			 newPath.append(iterationString + ".bin");
+			 //System.out.println(newPath.toString());
+			 filePathEvent = newPath.toString();
+			 //System.out.println(filePathEvent);
+		 }
 		try {
-			fileOSEvent = new FileOutputStream("C:\\Users\\Mike\\Desktop\\JavaOutput\\EventPlot.bin");
+			fileOSEvent = new FileOutputStream(filePathEvent);
 		
 		} catch (FileNotFoundException e1) {
 			
@@ -2419,22 +2450,37 @@ public static void checkHopArray(int index){
 		//System.out.println(Arrays.deepToString(copyTotalTimeArray));
 	
 	//System.out.println("tOnArray: "+Arrays.deepToString(tOnArray));
-		TextWindow stateTimes = new TextWindow("Average On/Off Time","tOn (s) \t tOff (s)" ,
-				String.valueOf(tOnArray[0][0])+ "\t"+ String.valueOf(tOffArray[0][0]) ,  700, 400);
-		
-		for(int i = 1; i <=tOnArray.length - 1; i++){		
-			stateTimes.append(String.valueOf(tOnArray[i][0])+"\t"+String.valueOf(tOffArray[i][0]));	
-			}
-		
+	
+//		TextWindow stateTimes = new TextWindow("Average On/Off Time","tOn (s) \t tOff (s)" ,
+//				String.valueOf(tOnArray[0][0])+ "\t"+ String.valueOf(tOffArray[0][0]) ,  700, 400);
+//		
+//		for(int i = 1; i <=tOnArray.length - 1; i++){		
+//			stateTimes.append(String.valueOf(tOnArray[i][0])+"\t"+String.valueOf(tOffArray[i][0]));	
+//			}
+//		
 		
 		
 		//statePlot.show();
 		
 //////////////////////////WRITE
 		
-		FileOutputStream fileOSEvent = null;
+		FileOutputStream fileOSState = null;
+ String filePathState = "C:\\Users\\Mike\\Desktop\\JavaOutput\\StatePlot.bin";
+		 
+		 File f = new File(filePathState);
+		 if(f.exists() && !f.isDirectory()){
+			 //System.out.println(filePathState+ " exists");
+			 StringBuilder newPath = new StringBuilder(filePathState);
+			 newPath.delete(filePathState.length() - 4, filePathState.length());
+			 //System.out.println(newPath.toString());
+			 String iterationString = Integer.toString(iterationNumber);
+			 newPath.append(iterationString + ".bin");
+			 //System.out.println(newPath.toString());
+			filePathState = newPath.toString();
+			//System.out.println(filePathState);
+		 }
 		try {
-			fileOSEvent = new FileOutputStream("C:\\Users\\Mike\\Desktop\\JavaOutput\\StatePlot.bin");
+			fileOSState = new FileOutputStream(filePathState);
 
 		} catch (FileNotFoundException e1) {
 
@@ -2457,19 +2503,19 @@ public static void checkHopArray(int index){
 
 
 		try {
-			fileOSEvent.write(byteData, 0, byteData.length);
+			fileOSState.write(byteData, 0, byteData.length);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		try {
-			fileOSEvent.flush();
+			fileOSState.flush();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		try {
-			fileOSEvent.close();
+			fileOSState.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -2766,11 +2812,25 @@ public static void checkHopArray(int index){
 		totalHopPlot.addPoints(xHop, yHop, 0);
 		
 		
-		totalHopPlot.show();
+		//totalHopPlot.show();
 //////////////////////////////WRITE
 		 FileOutputStream fileOSHop = null;
+ String filePathHop = "C:\\Users\\Mike\\Desktop\\JavaOutput\\HopPlot.bin";
+		 
+		 File f = new File(filePathHop);
+		 if(f.exists() && !f.isDirectory()){
+			 //System.out.println(filePathHop+ " exists");
+			 StringBuilder newPath = new StringBuilder(filePathHop);
+			 newPath.delete(filePathHop.length() - 4, filePathHop.length());
+			 //System.out.println(newPath.toString());
+			 String iterationString = Integer.toString(iterationNumber);
+			 newPath.append(iterationString + ".bin");
+			 //System.out.println(newPath.toString());
+			 filePathHop = newPath.toString();
+			//System.out.println(filePathHop);
+		 }
 			try {
-				fileOSHop = new FileOutputStream("C:\\Users\\Mike\\Desktop\\JavaOutput\\HopPlot.bin");
+				fileOSHop = new FileOutputStream(filePathHop);
 			
 			} catch (FileNotFoundException e1) {
 				
