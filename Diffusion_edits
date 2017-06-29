@@ -16,21 +16,22 @@ import ij.text.TextWindow;
 public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 
-static final int height = 75;     //150   //300
-static final int width = 75;	   //150   //300
-static final int gap = 10;
+static final int[] height = {75, 75, 75, 75, 75};     //150   //300
+static final int[] width = {75, 75, 75, 75, 75};	   //150   //300
+static final int gap = 15;
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final double stepSize = 0.5;  //1.0   //0.5
-static final int move = 1000000; //move n positions   //50,000,000
-static final int nReceptors = 4; //should not exceed height*width 
-static final int hopProb = 5; //0 to 100   //**if confining to inner boundary only, change eventCheck()
-static final double concentration = 1.0; //M     //0.000001   0.0000000052f  K_off / K_on
-static final double kOn = 0.5;   //M^-1 * s^-1   //270000.0;  3000000.0
-static final double kOff = 0.5;  //s^1       3800.0     //0.00014; 
-static final double timeStep = 1.0; //0.0000003; //seconds
-static final int eventInterval = 100000;  //  interval based on move, not move*steps
+static final int move = 10000000; //move n positions   //50,000,000
+static final int nReceptors = 10; //should not exceed height*width 
+static final int[] hopProb = {0, 5, 50, 80, 100}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
+static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
+static final double[] kOn = {3000000.0, 3000000.0, 3000000.0, 3000000.0, 3000000.0};   //M^-1 * s^-1   //270000.0;  3000000.0
+static final double[] kOff = {10000000.0, 10000000.0, 10000000.0, 10000000.0, 10000000.0};  //s^1       3800.0     //0.00014; 
+static final double timeStep = 0.0000003; //0.0000003; //seconds
+static final int eventInterval = 1;  //  interval based on move, not move*steps
 static final int generateActive = 50;
-static final int iterations = 50;
+static final int iterations = 1;
+static final int conditions = 5;  //number of conditions to test, make sure this number matches array size of parameters
 ///////////////////////////////////////////////////////////////
 
 //optimization --> track state changes at time points for state and time arrays instead of saving all moves
@@ -75,10 +76,14 @@ static double hops = 0.0;
 static int a = 0;  
 static double events = 0;
 static int iterationNumber = 0;
+static int conditionNumber = 0;
+
 
 
 	public static void main(String args[]) throws IOException{
 		
+		for(int c = 0; c <= conditions - 1; c++){
+			
 		for(int i = 0; i <=iterations - 1; i++){
 		
 		Thread t1 = new Thread(new Runnable(){
@@ -136,7 +141,7 @@ static int iterationNumber = 0;
 					
 						int m = i;
 						if(m%100000 == 0){
-						//System.out.println("m: "+m);
+						System.out.println("m: "+m);
 						}
 						
 						movementArray(m);	
@@ -165,9 +170,9 @@ static int iterationNumber = 0;
 						while(recCheck == 0){
 						try {
 							
-							ds.writeFloat((float) nReceptors);
+//							ds.writeFloat((float) nReceptors);
 							ds.writeFloat((float) steps);
-							ds.writeFloat((float) move);
+//							ds.writeFloat((float) move);
 						} catch (IOException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
@@ -232,7 +237,8 @@ static int iterationNumber = 0;
 							eventPerTime = 0.0;
 							
 						}
-						///////////////////////////eventCheck()
+						///////////////////////////eventCheck() end
+						
 			//add states of each receptor to state array for CONTINOUS plotting in plotStates()
 						//kill this if using plotStateChange() instead
 						for(int j = 0; j <= nReceptors - 1; j++){
@@ -281,6 +287,7 @@ static int iterationNumber = 0;
 				plotHop();
 				plotStates();
 				//plotStateChanges();
+			
 			System.out.println("iterationNumber: "+iterationNumber);
 			iterationNumber++;	
 			
@@ -337,7 +344,11 @@ static int iterationNumber = 0;
 			e.printStackTrace();
 		}
 								
-	}			
+	}//iterations end
+		System.out.println(height[conditionNumber]);
+		conditionNumber++;
+	}//conditionNumber end
+		
 	}	//main end
 	
 	 public static synchronized void initialArray(){
@@ -346,8 +357,8 @@ static int iterationNumber = 0;
 		 for(int i = 0; i <= nReceptors - 1; i++){
 		
 			//int randReceptor = rand.nextInt(2); //0 inactive, 1 active
-			int randRow = rand.nextInt(height);//random row within height constraint 
-			int randCol = rand.nextInt(width);//random column within width constraint 
+			int randRow = rand.nextInt(height[conditionNumber]);//random row within height constraint 
+			int randCol = rand.nextInt(width[conditionNumber]);//random column within width constraint 
 		
 				//receptorArray[i][0] = randReceptor;
 			boolean goActive = randState();
@@ -453,14 +464,14 @@ public static void checkHopArray(int index){
 }
 	 public static int jRow(){
 		 Random randCheck = new Random();
-		 int jRandRow = randCheck.nextInt(height);
+		 int jRandRow = randCheck.nextInt(height[conditionNumber]);
 		 
 		 return jRandRow;
 	 }///////jRow() end
 	 
 	 public static int jCol(){
 		 Random randCheck = new Random();
-		 int jRandCol = randCheck.nextInt(width);
+		 int jRandCol = randCheck.nextInt(width[conditionNumber]);
 		 
 		 return jRandCol;
 	 }///////jCol() end
@@ -480,7 +491,7 @@ public static void checkHopArray(int index){
 		 
 		 //increase concentration as variable with for loop later
 	
-		 double pOn = kOn*concentration*timeStep*100;  //%
+		 double pOn = kOn[conditionNumber]*concentration[conditionNumber]*timeStep*100;  //%
 		 int denominator = 100;
 		 int switchOn = 0;
 		 
@@ -531,7 +542,7 @@ public static void checkHopArray(int index){
 	 
 	 public static boolean switchInactive(){
 		 
-		 double pOff = kOff*timeStep*100;  //%
+		 double pOff = kOff[conditionNumber]*timeStep*100;  //%
 		 int denominator = 100;
 		 
 		 int switchOff = 0;
@@ -1234,7 +1245,7 @@ public static void checkHopArray(int index){
 		 int randHop = 1 + rand.nextInt( (100) - 1 + 1); // 1 to 100 both inclusive
 		 //System.out.println(randHop);
 		 
-		 if(randHop < hopProb){
+		 if(randHop < hopProb[conditionNumber]){
 			 //System.out.println("Hop");
 			 return true;
 			 
@@ -1300,7 +1311,7 @@ public static void checkHopArray(int index){
 			 }
 			 
 			 //BOUNDARY CHECKING
-			 else if(receptorArray[i][1] > width){	
+			 else if(receptorArray[i][1] > width[conditionNumber]){	
 				
 				 
 				 //System.out.println("222before hop x: "+receptorArray[i][1]);
@@ -1310,7 +1321,7 @@ public static void checkHopArray(int index){
 					 
 					 //System.out.println("222receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
 							 
-					 hopOutXLocationArray.add((double) width);
+					 hopOutXLocationArray.add((double) width[conditionNumber]);
 					 hopOutYLocationArray.add(receptorArray[i][2]);
 					 hops++;
 					 hopArray.add(hops);
@@ -1327,7 +1338,7 @@ public static void checkHopArray(int index){
 				 }
 				 else{			   //don't hop
 					 //System.out.println("222don't hop BEFORE: "+Arrays.deepToString(receptorArray));
-					 receptorArray[i][1] = width;
+					 receptorArray[i][1] = width[conditionNumber];
 				     //receptorArray[i][1] = (width - stepSize);
 				 //System.out.println("222don't hop AFTER: "+Arrays.deepToString(receptorArray));
 				 }
@@ -1369,7 +1380,7 @@ public static void checkHopArray(int index){
 			 }
 			 
 			 //BOUNDARY CHECKING
-			 else if(receptorArray[i][2] > height){
+			 else if(receptorArray[i][2] > height[conditionNumber]){
 				 
 				 
 				 //System.out.println("444before hop x: "+receptorArray[i][1]);
@@ -1380,7 +1391,7 @@ public static void checkHopArray(int index){
 					 //System.out.println("444receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
 					 	
 					 hopOutXLocationArray.add(receptorArray[i][1]);
-					 hopOutYLocationArray.add((double) height);
+					 hopOutYLocationArray.add((double) height[conditionNumber]);
 					 hops++;
 					 hopArray.add(hops);
 					 hopTimeArray.add((double) mm*timeStep);
@@ -1396,7 +1407,7 @@ public static void checkHopArray(int index){
 				 }
 				 else{			   //don't hop
 				  //System.out.println("444don't hop BEFORE: "+Arrays.deepToString(receptorArray));
-				    receptorArray[i][2] = height;
+				    receptorArray[i][2] = height[conditionNumber];
 				  //receptorArray[i][2] = (height - stepSize);
 				    //System.out.println("444don't hop AFTER: "+Arrays.deepToString(receptorArray));
 				 }
@@ -1422,8 +1433,8 @@ public static void checkHopArray(int index){
 			  
 			  
 				 //BOUNDARY CHECKING
-				 if(receptorArray[i][1] < width && receptorArray[i][1] > 0 && receptorArray[i][2] > 0 
-						 && receptorArray[i][2] < height && previousReceptorArray[i][1] <= 0){ //hop in from right
+				 if(receptorArray[i][1] < width[conditionNumber] && receptorArray[i][1] > 0 && receptorArray[i][2] > 0 
+						 && receptorArray[i][2] < height[conditionNumber] && previousReceptorArray[i][1] <= 0){ //hop in from right
 					 				 
 					 //System.out.println("111before hop x: "+receptorArray[i][1]);
 					//System.out.println("111before hop y: "+receptorArray[i][2]);
@@ -1460,8 +1471,8 @@ public static void checkHopArray(int index){
 				 }
 				 
 				 //BOUNDARY CHECKING
-				 else if(receptorArray[i][1] < width && receptorArray[i][1] > 0 && receptorArray[i][2] > 0 
-						 && receptorArray[i][2] < height && previousReceptorArray[i][1] >= width){	//hop in from left
+				 else if(receptorArray[i][1] < width[conditionNumber] && receptorArray[i][1] > 0 && receptorArray[i][2] > 0 
+						 && receptorArray[i][2] < height[conditionNumber] && previousReceptorArray[i][1] >= width[conditionNumber]){	//hop in from left
 					
 					 
 					 //System.out.println("222before hop x: "+receptorArray[i][1]);
@@ -1471,7 +1482,7 @@ public static void checkHopArray(int index){
 						 //System.out.println("666prevRecArray BEFORE hop: "+Arrays.deepToString(previousReceptorArray));
 						 //System.out.println("666receptorArray BEFORE hop: "+Arrays.deepToString(receptorArray));
 									 
-						 hopInXLocationArray.add((double) width);
+						 hopInXLocationArray.add((double) width[conditionNumber]);
 						 hopInYLocationArray.add(receptorArray[i][2]);
 						 hops++;
 						 hopArray.add(hops);
@@ -1489,7 +1500,7 @@ public static void checkHopArray(int index){
 					 }
 					 else{			   //don't hop
 						 //System.out.println("666don't hop BEFORE correction: "+Arrays.deepToString(receptorArray));
-					receptorArray[i][1] = width;
+					receptorArray[i][1] = width[conditionNumber];
 					//receptorArray[i][1] = (width + stepSize);
 					 //System.out.println("666don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
 					 }
@@ -1497,8 +1508,8 @@ public static void checkHopArray(int index){
 				 /////////////////receptorArray[i][2] = receptorArray[i][2] + moveArray[i][2];
 				 
 				 //BOUNDARY CHECKING		
-				 if(receptorArray[i][2] > 0 && receptorArray[i][2] < height && receptorArray[i][1] > 0 
-						 && receptorArray[i][1] < width && previousReceptorArray[i][2] <= 0){  //hop in from bottom
+				 if(receptorArray[i][2] > 0 && receptorArray[i][2] < height[conditionNumber] && receptorArray[i][1] > 0 
+						 && receptorArray[i][1] < width[conditionNumber] && previousReceptorArray[i][2] <= 0){  //hop in from bottom
 					 
 					 
 					//System.out.println("333before hop x: "+receptorArray[i][1]);
@@ -1533,8 +1544,8 @@ public static void checkHopArray(int index){
 				 }
 				 
 				 //BOUNDARY CHECKING
-				 else if(receptorArray[i][2] < height && receptorArray[i][2] > 0 && receptorArray[i][1] > 0
-						 && receptorArray[i][1] < width && previousReceptorArray[i][2] >= height){ //hop in from top
+				 else if(receptorArray[i][2] < height[conditionNumber] && receptorArray[i][2] > 0 && receptorArray[i][1] > 0
+						 && receptorArray[i][1] < width[conditionNumber] && previousReceptorArray[i][2] >= height[conditionNumber]){ //hop in from top
 					 
 					 
 					 //System.out.println("444before hop x: "+receptorArray[i][1]);
@@ -1546,7 +1557,7 @@ public static void checkHopArray(int index){
 						
 						 
 						 hopInXLocationArray.add(receptorArray[i][1]);
-						 hopInYLocationArray.add((double) height);
+						 hopInYLocationArray.add((double) height[conditionNumber]);
 						 hops++;
 						 hopArray.add(hops);
 						 hopTimeArray.add((double) mm*timeStep);
@@ -1563,7 +1574,7 @@ public static void checkHopArray(int index){
 					 }
 					 else{			   //don't hop
 					// System.out.println("888don't hop BEFORE correction: "+Arrays.deepToString(receptorArray));
-					 receptorArray[i][2] = height;
+					 receptorArray[i][2] = height[conditionNumber];
 					 //receptorArray[i][2] = (height+ stepSize);
 					// System.out.println("888don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
 					 }
@@ -1573,13 +1584,13 @@ public static void checkHopArray(int index){
 					 edgeGeneration(i);
 					 
 				 }
-				 else if(receptorArray[i][1] > (width + gap)){  //pass right edge
+				 else if(receptorArray[i][1] > (width[conditionNumber] + gap)){  //pass right edge
 					 edgeGeneration(i);
 				 }
 				 else if(receptorArray[i][2] < (0 - gap)){  //pass bottom edge
 					 edgeGeneration(i);
 				 }
-				 else if(receptorArray[i][2] > (height + gap)){  //pass top edge
+				 else if(receptorArray[i][2] > (height[conditionNumber] + gap)){  //pass top edge
 					 edgeGeneration(i);
 				 }
 				 
@@ -1630,7 +1641,7 @@ public static void checkHopArray(int index){
 		 if(randSide == 0){ //bottom
 			//from + rand.nextInt(to - from + 1)  both inclusive
 		
-			xEdge = (0 - gap) + rand.nextInt( (width + gap) - (0 - gap) + 1 );
+			xEdge = (0 - gap) + rand.nextInt( (width[conditionNumber] + gap) - (0 - gap) + 1 );
 			yEdge = (0 - gap);
 			
 			receptorArray[index][1] = xEdge;
@@ -1649,7 +1660,7 @@ public static void checkHopArray(int index){
 			//from + rand.nextInt(to - from + 1) both inclusive
 			 
 			 xEdge = (0 - gap);
-			 yEdge = (0 - gap) + rand.nextInt( (height + gap) - (0 - gap) + 1);
+			 yEdge = (0 - gap) + rand.nextInt( (height[conditionNumber] + gap) - (0 - gap) + 1);
 			 
 			 receptorArray[index][1] = xEdge;
 			 receptorArray[index][2] = yEdge;
@@ -1665,8 +1676,8 @@ public static void checkHopArray(int index){
 		 if(randSide == 2){ //top
 			//from + rand.nextInt(to - from + 1) both inclusive
 			 
-			 xEdge = (0 - gap) + rand.nextInt( (width + gap) - (0 - gap) + 1 );
-			 yEdge = (height + gap);
+			 xEdge = (0 - gap) + rand.nextInt( (width[conditionNumber]+ gap) - (0 - gap) + 1 );
+			 yEdge = (height[conditionNumber] + gap);
 			 
 			 receptorArray[index][1] = xEdge;
 			 receptorArray[index][2] = yEdge;
@@ -1682,8 +1693,8 @@ public static void checkHopArray(int index){
 		 if(randSide == 3){ // right
 			//from + rand.nextInt(to - from + 1) both inclusive
 			 
-			 xEdge = (width + gap);
-			 yEdge = (0 - gap) + rand.nextInt( (height + gap) - (0 - gap) + 1 );
+			 xEdge = (width[conditionNumber] + gap);
+			 yEdge = (0 - gap) + rand.nextInt( (height[conditionNumber] + gap) - (0 - gap) + 1 );
 			 
 			 receptorArray[index][1] = xEdge;
 			 receptorArray[index][2] = yEdge;
@@ -1712,10 +1723,10 @@ public static void checkHopArray(int index){
 		 if(randSide == 0){ //bottom
 			//from + rand.nextInt(to - from + 1)
 		
-			xEdge1 = (0 - gap) + rand.nextInt( (width + gap) - (0 - gap) + 1 );
+			xEdge1 = (0 - gap) + rand.nextInt( (width[conditionNumber] + gap) - (0 - gap) + 1 );
 			yEdge1 = (0 - gap);
 			
-			xEdge2 = (0 - gap) + rand.nextInt( (width + gap) - (0 - gap) + 1 );
+			xEdge2 = (0 - gap) + rand.nextInt( (width[conditionNumber] + gap) - (0 - gap) + 1 );
 			yEdge2 = (0 - gap);
 			
 			receptorArray[index1][1] = xEdge1;
@@ -1745,10 +1756,10 @@ public static void checkHopArray(int index){
 			//from + rand.nextInt(to - from + 1)
 			 
 			 xEdge1 = (0 - gap);
-			 yEdge1 = (0 - gap) + rand.nextInt( (height + gap) - (0 - gap) + 1);
+			 yEdge1 = (0 - gap) + rand.nextInt( (height[conditionNumber] + gap) - (0 - gap) + 1);
 			 
 			 xEdge2 = (0 - gap);
-			 yEdge2 = (0 - gap) + rand.nextInt( (height + gap) - (0 - gap) + 1);
+			 yEdge2 = (0 - gap) + rand.nextInt( (height[conditionNumber] + gap) - (0 - gap) + 1);
 			 
 			 receptorArray[index1][1] = xEdge1;
 			 receptorArray[index1][2] = yEdge1;
@@ -1774,11 +1785,11 @@ public static void checkHopArray(int index){
 		 if(randSide == 2){ //top
 			//from + rand.nextInt(to - from + 1)
 			 
-			 xEdge1 = (0 - gap) + rand.nextInt( (width + gap) - (0 - gap) + 1 );
-			 yEdge1 = (height + gap);
+			 xEdge1 = (0 - gap) + rand.nextInt( (width[conditionNumber] + gap) - (0 - gap) + 1 );
+			 yEdge1 = (height[conditionNumber] + gap);
 			 
-			 xEdge2 = (0 - gap) + rand.nextInt( (width + gap) - (0 - gap) + 1 );
-			 yEdge2 = (height + gap);
+			 xEdge2 = (0 - gap) + rand.nextInt( (width[conditionNumber] + gap) - (0 - gap) + 1 );
+			 yEdge2 = (height[conditionNumber] + gap);
 			 
 			 receptorArray[index1][1] = xEdge1;
 			 receptorArray[index1][2] = yEdge1;
@@ -1804,11 +1815,11 @@ public static void checkHopArray(int index){
 		 if(randSide == 3){ // right
 			//from + rand.nextInt(to - from + 1)
 			 
-			 xEdge1 = (width + gap);
-			 yEdge1 = (0 - gap) + rand.nextInt( (height + gap) - (0 - gap) + 1 );
+			 xEdge1 = (width[conditionNumber] + gap);
+			 yEdge1 = (0 - gap) + rand.nextInt( (height[conditionNumber] + gap) - (0 - gap) + 1 );
 			 
-			 xEdge2 = (width + gap);
-			 yEdge2 = (0 - gap) + rand.nextInt( (height + gap) - (0 - gap) + 1 );
+			 xEdge2 = (width[conditionNumber] + gap);
+			 yEdge2 = (0 - gap) + rand.nextInt( (height[conditionNumber] + gap) - (0 - gap) + 1 );
 			 
 			 receptorArray[index1][1] = xEdge1;
 			 receptorArray[index1][2] = yEdge1;
@@ -2059,18 +2070,18 @@ public static void checkHopArray(int index){
 		 //draw inner boundary 
 		 positionPlot.setLineWidth(2);
 		 positionPlot.setColor(Color.BLUE);
-		 positionPlot.drawLine(0.0, 0.0, width, 0.0);
-		 positionPlot.drawLine(0.0, 0.0, 0.0, height);
-		 positionPlot.drawLine(width, height,0.0,height );
-		 positionPlot.drawLine(width, height, width, 0.0);
+		 positionPlot.drawLine(0.0, 0.0, width[conditionNumber], 0.0);
+		 positionPlot.drawLine(0.0, 0.0, 0.0, height[conditionNumber]);
+		 positionPlot.drawLine(width[conditionNumber], height[conditionNumber],0.0,height[conditionNumber] );
+		 positionPlot.drawLine(width[conditionNumber], height[conditionNumber], width[conditionNumber], 0.0);
 		 
 //		//draw outer boundary
 		 positionPlot.setLineWidth(2);
 		 positionPlot.setColor(Color.RED);
-		 positionPlot.drawLine(0.0-gap, 0.0-gap, width+gap, 0.0-gap);
-		 positionPlot.drawLine(0.0-gap, 0.0-gap, 0.0-gap, height+gap);
-		 positionPlot.drawLine(width+gap, height+gap,0.0-gap,height+gap );
-		 positionPlot.drawLine(width+gap, height+gap, width+gap, 0.0-gap);
+		 positionPlot.drawLine(0.0-gap, 0.0-gap, width[conditionNumber]+gap, 0.0-gap);
+		 positionPlot.drawLine(0.0-gap, 0.0-gap, 0.0-gap, height[conditionNumber]+gap);
+		 positionPlot.drawLine(width[conditionNumber]+gap, height[conditionNumber]+gap,0.0-gap,height[conditionNumber]+gap );
+		 positionPlot.drawLine(width[conditionNumber]+gap, height[conditionNumber]+gap, width[conditionNumber]+gap, 0.0-gap);
 		 
 		 //tested for squares only, not for rectangles, make sure height = width
 //		 positionPlot.setLineWidth(2);
@@ -2085,11 +2096,11 @@ public static void checkHopArray(int index){
 		//so set parameters for first data set before testPlot.show()
 		//line width for first receptor data set 	 
 		 //positionPlot.setColor(Color.BLACK);  //  color for first receptor data set
-		 positionPlot.setLimits( (0 - gap) - 50, (width + gap) + 50, (0 - gap) - 50, (height + gap) + 50); //x1,x2,y1,y2
+		 positionPlot.setLimits( (0 - gap) - 50, (width[conditionNumber] + gap) + 50, (0 - gap) - 50, (height[conditionNumber] + gap) + 50); //x1,x2,y1,y2
 		 positionPlot.setColor(Color.BLACK); 
 		 positionPlot.setLineWidth(2);
 		  
-		 //positionPlot.show();  
+		 positionPlot.show();  
 		 
 		 //additional data sets
 		 //set methods apply to the first data set it encounters
@@ -2135,78 +2146,78 @@ public static void checkHopArray(int index){
 		 positionPlot.addPoints(xEvent, yEvent, 0);
 		 
 ////////////////////////WRITE
-		 FileOutputStream fileOSTraj = null;
-		 String filePathTraj = "C:\\Users\\Mike\\Desktop\\JavaOutput\\PositionPlot.bin";
-		 
-		 File f = new File(filePathTraj);
-		 if(f.exists() && !f.isDirectory()){
-			 //System.out.println(filePathTraj+ " exists");
-			 StringBuilder newPath = new StringBuilder(filePathTraj);
-			 newPath.delete(filePathTraj.length() - 4, filePathTraj.length());
-			 //System.out.println(newPath.toString());
-			 String iterationString = Integer.toString(iterationNumber);
-			 newPath.append(iterationString + ".bin");
-			 //System.out.println(newPath.toString());
-			filePathTraj = newPath.toString();
-			//System.out.println(filePathTraj);
-		 }
-		 
-			try {
-				fileOSTraj = new FileOutputStream(filePathTraj);
-			 
-				
-			} catch (FileNotFoundException e1) {
-				
-				e1.printStackTrace();
-			}
-			ByteArrayOutputStream basTraj = new ByteArrayOutputStream();
-			DataOutputStream dsTraj = new DataOutputStream(basTraj);
-			
-			try {
-//				for(int i = 0; i <= xPlot.length - 1; i++){
-//					for(int j = 0; j <=xPlot[i].length - 1; j++){
-//						dsTraj.writeFloat((float) xPlot[i][j] );
-//						dsTraj.writeFloat((float) yPlot[i][j] );
-//					}
+//		 FileOutputStream fileOSTraj = null;
+//		 String filePathTraj = "C:\\Users\\Mike\\Desktop\\JavaOutput\\PositionPlot.bin";
+//		 
+//		 File f = new File(filePathTraj);
+//		 if(f.exists() && !f.isDirectory()){
+//			 //System.out.println(filePathTraj+ " exists");
+//			 StringBuilder newPath = new StringBuilder(filePathTraj);
+//			 newPath.delete(filePathTraj.length() - 4, filePathTraj.length());
+//			 //System.out.println(newPath.toString());
+//			 String iterationString = Integer.toString(iterationNumber);
+//			 newPath.append(iterationString + ".bin");
+//			 //System.out.println(newPath.toString());
+//			filePathTraj = newPath.toString();
+//			//System.out.println(filePathTraj);
+//		 }
+//		 
+//			try {
+//				fileOSTraj = new FileOutputStream(filePathTraj);
+//			 
 //				
+//			} catch (FileNotFoundException e1) {
+//				
+//				e1.printStackTrace();
+//			}
+//			ByteArrayOutputStream basTraj = new ByteArrayOutputStream();
+//			DataOutputStream dsTraj = new DataOutputStream(basTraj);
+//			
+//			try {
+////				for(int i = 0; i <= xPlot.length - 1; i++){
+////					for(int j = 0; j <=xPlot[i].length - 1; j++){
+////						dsTraj.writeFloat((float) xPlot[i][j] );
+////						dsTraj.writeFloat((float) yPlot[i][j] );
+////					}
+////				
+////				}
+//				for(int i = 0; i <=xEvent.length - 1; i++){
+//					dsTraj.writeFloat( (float) xEvent[i]);
+//					dsTraj.writeFloat( (float) yEvent[i]);
 //				}
-				for(int i = 0; i <=xEvent.length - 1; i++){
-					dsTraj.writeFloat( (float) xEvent[i]);
-					dsTraj.writeFloat( (float) yEvent[i]);
-				}
-				for(int i = 0; i <=xInLocation.length - 1; i++){
-					dsTraj.writeFloat( (float) xInLocation[i]);
-					dsTraj.writeFloat( (float) yInLocation[i]);
-				}
-				for(int i = 0; i <=xOutLocation.length - 1; i++){
-					dsTraj.writeFloat( (float) xOutLocation[i]);
-					dsTraj.writeFloat( (float) yOutLocation[i]);
-				}
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			byte[] byteData = basTraj.toByteArray();
-			
-			
-			try {
-				fileOSTraj.write(byteData, 0, byteData.length);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			try {
-				fileOSTraj.flush();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			try {
-				fileOSTraj.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+//				for(int i = 0; i <=xInLocation.length - 1; i++){
+//					dsTraj.writeFloat( (float) xInLocation[i]);
+//					dsTraj.writeFloat( (float) yInLocation[i]);
+//				}
+//				for(int i = 0; i <=xOutLocation.length - 1; i++){
+//					dsTraj.writeFloat( (float) xOutLocation[i]);
+//					dsTraj.writeFloat( (float) yOutLocation[i]);
+//				}
+//			} catch (IOException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+//			byte[] byteData = basTraj.toByteArray();
+//			
+//			
+//			try {
+//				fileOSTraj.write(byteData, 0, byteData.length);
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			try {
+//				fileOSTraj.flush();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			try {
+//				fileOSTraj.close();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 			
 /////////////////////////WRITE END
 	 }/////////plotTrajectory() end
@@ -2241,7 +2252,7 @@ public static void checkHopArray(int index){
 		eventPlot.setColor(Color.RED);
 		eventPlot.addPoints(xEvent, yEvent, 0);
 		
-		//eventPlot.show();
+		eventPlot.show();
 		
 		
 
@@ -2250,67 +2261,67 @@ public static void checkHopArray(int index){
 		eventChangePlot.setColor(Color.BLUE);
 		eventChangePlot.addPoints(xEvent, yEventChange, 0);
 		
-		//eventChangePlot.show();
+		eventChangePlot.show();
 		
 //////////////////////////WRITE
-		
-		FileOutputStream fileOSEvent = null;
- String filePathEvent = "C:\\Users\\Mike\\Desktop\\JavaOutput\\EventPlot.bin";
-		 
-		 File f = new File(filePathEvent);
-		 if(f.exists() && !f.isDirectory()){
-			 //System.out.println(filePathEvent+ " exists");
-			 StringBuilder newPath = new StringBuilder(filePathEvent);
-			 newPath.delete(filePathEvent.length() - 4, filePathEvent.length());
-			 //System.out.println(newPath.toString());
-			 String iterationString = Integer.toString(iterationNumber);
-			 newPath.append(iterationString + ".bin");
-			 //System.out.println(newPath.toString());
-			 filePathEvent = newPath.toString();
-			 //System.out.println(filePathEvent);
-		 }
-		try {
-			fileOSEvent = new FileOutputStream(filePathEvent);
-		
-		} catch (FileNotFoundException e1) {
-			
-			e1.printStackTrace();
-		}
-		ByteArrayOutputStream basEvent = new ByteArrayOutputStream();
-		DataOutputStream dsEvent = new DataOutputStream(basEvent);
-		
-		try {
-			for(int i = 0; i <= yEvent.length - 1; i++){
-			dsEvent.writeFloat((float) yEvent[i] );
-			}
-			for(int i = 0; i <=xEvent.length - 1; i++){
-				dsEvent.writeFloat( (float) xEvent[i]);
-			}
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		byte[] byteData = basEvent.toByteArray();
-		
-		
-		try {
-			fileOSEvent.write(byteData, 0, byteData.length);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			fileOSEvent.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			fileOSEvent.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		
+//		FileOutputStream fileOSEvent = null;
+// String filePathEvent = "C:\\Users\\Mike\\Desktop\\JavaOutput\\EventPlot.bin";
+//		 
+//		 File f = new File(filePathEvent);
+//		 if(f.exists() && !f.isDirectory()){
+//			 //System.out.println(filePathEvent+ " exists");
+//			 StringBuilder newPath = new StringBuilder(filePathEvent);
+//			 newPath.delete(filePathEvent.length() - 4, filePathEvent.length());
+//			 //System.out.println(newPath.toString());
+//			 String iterationString = Integer.toString(iterationNumber);
+//			 newPath.append(iterationString + ".bin");
+//			 //System.out.println(newPath.toString());
+//			 filePathEvent = newPath.toString();
+//			 //System.out.println(filePathEvent);
+//		 }
+//		try {
+//			fileOSEvent = new FileOutputStream(filePathEvent);
+//		
+//		} catch (FileNotFoundException e1) {
+//			
+//			e1.printStackTrace();
+//		}
+//		ByteArrayOutputStream basEvent = new ByteArrayOutputStream();
+//		DataOutputStream dsEvent = new DataOutputStream(basEvent);
+//		
+//		try {
+//			for(int i = 0; i <= yEvent.length - 1; i++){
+//			dsEvent.writeFloat((float) yEvent[i] );
+//			}
+//			for(int i = 0; i <=xEvent.length - 1; i++){
+//				dsEvent.writeFloat( (float) xEvent[i]);
+//			}
+//		} catch (IOException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		byte[] byteData = basEvent.toByteArray();
+//		
+//		
+//		try {
+//			fileOSEvent.write(byteData, 0, byteData.length);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		try {
+//			fileOSEvent.flush();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		try {
+//			fileOSEvent.close();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 //////////////////////////////WRITE END
 		
 	 }////////plotEvents() end
@@ -2451,75 +2462,75 @@ public static void checkHopArray(int index){
 	
 	//System.out.println("tOnArray: "+Arrays.deepToString(tOnArray));
 	
-//		TextWindow stateTimes = new TextWindow("Average On/Off Time","tOn (s) \t tOff (s)" ,
-//				String.valueOf(tOnArray[0][0])+ "\t"+ String.valueOf(tOffArray[0][0]) ,  700, 400);
-//		
-//		for(int i = 1; i <=tOnArray.length - 1; i++){		
-//			stateTimes.append(String.valueOf(tOnArray[i][0])+"\t"+String.valueOf(tOffArray[i][0]));	
-//			}
-//		
+		TextWindow stateTimes = new TextWindow("Average On/Off Time","tOn (s) \t tOff (s)" ,
+				String.valueOf(tOnArray[0][0])+ "\t"+ String.valueOf(tOffArray[0][0]) ,  700, 400);
+		
+		for(int i = 1; i <=tOnArray.length - 1; i++){		
+			stateTimes.append(String.valueOf(tOnArray[i][0])+"\t"+String.valueOf(tOffArray[i][0]));	
+			}
 		
 		
-		//statePlot.show();
+		
+		statePlot.show();
 		
 //////////////////////////WRITE
 		
-		FileOutputStream fileOSState = null;
- String filePathState = "C:\\Users\\Mike\\Desktop\\JavaOutput\\StatePlot.bin";
-		 
-		 File f = new File(filePathState);
-		 if(f.exists() && !f.isDirectory()){
-			 //System.out.println(filePathState+ " exists");
-			 StringBuilder newPath = new StringBuilder(filePathState);
-			 newPath.delete(filePathState.length() - 4, filePathState.length());
-			 //System.out.println(newPath.toString());
-			 String iterationString = Integer.toString(iterationNumber);
-			 newPath.append(iterationString + ".bin");
-			 //System.out.println(newPath.toString());
-			filePathState = newPath.toString();
-			//System.out.println(filePathState);
-		 }
-		try {
-			fileOSState = new FileOutputStream(filePathState);
-
-		} catch (FileNotFoundException e1) {
-
-			e1.printStackTrace();
-		}
-		ByteArrayOutputStream basState = new ByteArrayOutputStream();
-		DataOutputStream dsState = new DataOutputStream(basState);
-
-		try {
-				for(int i = 0; i <= stateArray.length - 1; i++){
-					for(int j = 0; j <=stateArray[i].length - 1; j++){
-					dsState.writeFloat( (float) stateArray[i][j]);
-					}
-				}
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		byte[] byteData = basState.toByteArray();
-
-
-		try {
-			fileOSState.write(byteData, 0, byteData.length);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			fileOSState.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			fileOSState.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-}
+//		FileOutputStream fileOSState = null;
+//		String filePathState = "C:\\Users\\Mike\\Desktop\\JavaOutput\\StatePlot.bin";
+//		 
+//		 File f = new File(filePathState);
+//		 if(f.exists() && !f.isDirectory()){
+//			 //System.out.println(filePathState+ " exists");
+//			 StringBuilder newPath = new StringBuilder(filePathState);
+//			 newPath.delete(filePathState.length() - 4, filePathState.length());
+//			 //System.out.println(newPath.toString());
+//			 String iterationString = Integer.toString(iterationNumber);
+//			 newPath.append(iterationString + ".bin");
+//			 //System.out.println(newPath.toString());
+//			filePathState = newPath.toString();
+//			//System.out.println(filePathState);
+//		 }
+//		try {
+//			fileOSState = new FileOutputStream(filePathState);
+//
+//		} catch (FileNotFoundException e1) {
+//
+//			e1.printStackTrace();
+//		}
+//		ByteArrayOutputStream basState = new ByteArrayOutputStream();
+//		DataOutputStream dsState = new DataOutputStream(basState);
+//
+//		try {
+//				for(int i = 0; i <= stateArray.length - 1; i++){
+//					for(int j = 0; j <=stateArray[i].length - 1; j++){
+//					dsState.writeFloat( (float) stateArray[i][j]);
+//					}
+//				}
+//		} catch (IOException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		byte[] byteData = basState.toByteArray();
+//
+//
+//		try {
+//			fileOSState.write(byteData, 0, byteData.length);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		try {
+//			fileOSState.flush();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		try {
+//			fileOSState.close();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//}
 //////////////////////////////WRITE END
 
 	}
@@ -2538,8 +2549,8 @@ public static void checkHopArray(int index){
 		ArrayList<Double> tOnAverage = new ArrayList<Double>();
 		ArrayList<Double> tOffAverage = new ArrayList<Double>();
 		
-		System.out.println(switchTimeArray.size());
-		System.out.println(switchStateArray.size());
+		//System.out.println(switchTimeArray.size());
+		//System.out.println(switchStateArray.size());
 		
 		//System.out.println("switchStateArray: "+switchStateArray);
 		//System.out.println("switchTimeArray: "+switchTimeArray);
@@ -2550,162 +2561,316 @@ public static void checkHopArray(int index){
 //		double[] xTime = new double[switchTimeArray.size()];
 //		double[] yState = new double[switchStateArray.size()];
 		
-		for(int i = 0; i <=switchTimeArray.size() - 1; i++){
+		double[][] switchArray = new double[switchTimeArray.size()][1];
+		double[][] stateChangeArray = new double[switchStateArray.size()][1];
+		
+		for(int i = 0; i < switchTimeArray.size(); i++){	
+			switchArray[i] = new double[switchTimeArray.get(i).size()];	
+			for(int j = 0; j <=switchArray[i].length - 1; j++){			
+				switchArray[i][j] = switchTimeArray.get(i).get(j).doubleValue();
+			}
+		}
+		
+		for(int i = 0; i < switchStateArray.size(); i++){
+			stateChangeArray[i] = new double[switchStateArray.get(i).size()];
+			for(int j = 0; j <= stateChangeArray[i].length - 1; j++){
+				stateChangeArray[i][j] = switchStateArray.get(i).get(j).doubleValue();
+				
+			}
+		}
+		//System.out.println(Arrays.deepToString(switchArray));
+				
+		for(int i = 0; i <= switchArray.length - 1; i ++){
 			tOnChange.add(new ArrayList());
 			tOffChange.add(new ArrayList());
 			
-						
-			//System.out.println("switchTimeArray SIZE: "+switchTimeArray.get(i).size());
-			for(int j = 0; j <=switchTimeArray.get(i).size() - 1; j++){
-				//System.out.println("i: "+i);
-				//yS = switchStateArray.get(i).get(j).doubleValue();
-			
+			System.out.println("switchArray length: "+switchArray[i].length);
+			for(int j = 0; j <=switchArray[i].length - 1; j++){
 				
-				//System.out.println(yS);
-				
-				//System.out.println("xTT :"+xTT);
-				//System.out.println("xT :"+xT);
-				//if first state in array is 0, implies the state before it was 1
-				if(switchStateArray.get(i).get(0).doubleValue() == 0.0 || switchStateArray.get(i).get(0).doubleValue() == 0.1 ){
-												
-					if( j == 0 ){
-						//add first element 
-						//System.out.println("111first element j: "+j);
-						//System.out.println("111into tOnChange: "+switchTimeArray.get(i).get(0).doubleValue());
-					tOnChange.get(i).add(switchTimeArray.get(i).get(0).doubleValue());
-					}
-					if( j > 0 && j%2 == 0){
-						xT = switchTimeArray.get(i).get(j-1).doubleValue();
-						if(xT == 0){
-							System.out.println("j:" +j);
-						}
-						xTT = switchTimeArray.get(i).get(j).doubleValue();
-						//add even indexed elements to tOnChange since first state is 1
-						//System.out.println("111even j: "+ j);
-						//System.out.println("111into tOnChange: "+(xTT - xT) );
-						duration = (xTT - xT);
-//						if(duration > 100){
-//							System.out.println("j: "+j);
-//							System.out.println("xTT: "+xTT);
-//							System.out.println("xT: "+xT);
-//							System.out.println(duration);
-//							
-//						}
-						if(duration < 0 ){
-							//System.out.println(duration);
-							duration = duration*(-1);
-							//System.out.println("new duration: "+duration);
-						}
-						//Math.abs(duration);
-						
-						tOnChange.get(i).add(duration);
-						
-						duration = 0.0;
-					}
-					if( j > 0 && j%2 != 0){
-						xT = switchTimeArray.get(i).get(j-1).doubleValue();
-						if(xT == 0){
-							System.out.println("j:" +j);
-						}
-						xTT = switchTimeArray.get(i).get(j).doubleValue();
-						//add odd indexed elements to tOffChange since first state is 1
-						//System.out.println("111odd j: "+ j);
-						//System.out.println("111into tOffChange: "+(xTT - xT));
-						duration = (xTT - xT);
-//						if(duration > 100){
-//							System.out.println("j: "+j);
-//							System.out.println("xTT: "+xTT);
-//							System.out.println("xT: "+xT);
-//							System.out.println(duration);
-//							
-//						}
-						if(duration < 0 ){
-							//System.out.println(duration);
-							duration = duration*(-1);
-							//System.out.println("new duration: "+duration);
-						}
-						//Math.abs(duration);
-						
-						tOffChange.get(i).add(duration);
-						
-						duration = 0.0;
-					}						
+				if(stateChangeArray[i][0] == 0.0 || stateChangeArray[i][0] == 0.1){
 					
-				}
-				//if first state in array is 1, implies the state before it was 0
-				if(switchStateArray.get(i).get(0).doubleValue() == 1.0 || switchStateArray.get(i).get(0).doubleValue() == 1.1){
-									
-					if( j == 0 ){
-						//add first element
-						//System.out.println("222first element j: "+j);
-						//System.out.println("222into tOffChange: "+switchTimeArray.get(i).get(0).doubleValue());
-						tOffChange.get(i).add(switchTimeArray.get(i).get(0).doubleValue());
+					if(j == 0){
+						tOnChange.get(i).add(switchArray[i][0]);
 					}
-					if( j > 0 && j%2 == 0){
-						xT = switchTimeArray.get(i).get(j-1).doubleValue();
-						if(xT == 0){
-							System.out.println("j:" +j);
-						}
-						xTT = switchTimeArray.get(i).get(j).doubleValue();
-						//add even indexed elements to tOffChange since first state is 0 
-						//System.out.println("222even j: "+ j);
-						//System.out.println("222into tOffChange: "+(xTT - xT));
+					
+
+					
+					if(j > 0 && j%2 !=0 ){
 						
-						duration = (xTT - xT);
-//						if(duration > 100){
-//							System.out.println("j: "+j);
-//							System.out.println("xTT: "+xTT);
-//							System.out.println("xT: "+xT);
-//							System.out.println(duration);
-//							
-//						}
-						if(duration < 0 ){
-							//System.out.println(duration);
-							duration = duration*(-1);
-							//System.out.println("new duration: "+duration);
+						
+						xT = switchArray[i][j-1];
+						xTT = switchArray[i][j];
+						if(xT == 0){
+							System.out.println("j: "+j);
+							//System.out.println(xTT+ " - "+ xT);
 						}
-						//Math.abs(duration);
+						duration = (xTT - xT);
+						if(duration < 0 ){
+							duration = duration*(-1);
+						}
 						tOffChange.get(i).add(duration);
-						
 						duration = 0.0;
 					}
-					if( j > 0 && j%2 !=0 ){
-						xT = switchTimeArray.get(i).get(j-1).doubleValue();
+					if(j > 0 && j%2 == 0){
+						
+						
+						xT = switchArray[i][j-1];
+						xTT = switchArray[i][j];
 						if(xT == 0){
-							System.out.println("j:" +j);
+							System.out.println("j: "+j);
+							System.out.println(xTT+ " - "+ xT);
 						}
-						xTT = switchTimeArray.get(i).get(j).doubleValue();
-						//add odd indexed elements to tOnChange since first state is 0
-						//System.out.println("222odd j: "+ j);
-						//System.out.println("222into tOnChange: "+(xTT - xT) );
 						
+						//System.out.println("j: "+j);
+						//System.out.println(xT+ " - "+ xTT);
 						duration = (xTT - xT);
-//						if(duration > 100){
-//							System.out.println("j: "+j);
-//							System.out.println("xTT: "+xTT);
-//							System.out.println("xT: "+xT);
-//							System.out.println(duration);
-//							
-//						}
 						if(duration < 0 ){
-							//System.out.println(duration);
 							duration = duration*(-1);
-							//System.out.println("new duration: "+duration);
 						}
-						
-						//Math.abs(duration);
 						tOnChange.get(i).add(duration);
-						
 						duration = 0.0;
 					}
 				}
-				
-			}	
-			
+				if(stateChangeArray[i][0] == 1.0 || stateChangeArray[i][0] == 1.1){
+					if(j == 0){
+						tOffChange.get(i).add(switchArray[i][0]);
+					}
+					
+
+					
+					if(j > 0 && j%2 != 0 ){
+						
+						
+						xT = switchArray[i][j-1];
+						xTT = switchArray[i][j];
+						if(xT == 0){
+							System.out.println("j: "+j);
+							System.out.println(xTT+ " - "+ xT);
+						}
+						
+						duration = (xTT - xT);
+						if(duration < 0 ){
+							duration = duration*(-1);
+						}
+						tOnChange.get(i).add(duration);
+						duration = 0.0;
+					}
+					if(j > 0 && j%2 == 0){
+						
+						
+						xT = switchArray[i][j-1];
+						xTT = switchArray[i][j];
+						if(xT == 0){
+							System.out.println("j: "+j);
+							System.out.println(xTT+ " - "+ xT);
+						}
+					
+						duration = (xTT - xT);
+						if(duration < 0 ){
+							duration = duration*(-1);
+						}
+						tOffChange.get(i).add(duration);
+						duration = 0.0;
+					}
+				}
+			}
 		}
+		//System.out.println("tOnChange: "+tOnChange);
+		//System.out.println("tOffChange: "+tOffChange);
 		
-	  // System.out.println("tOnChange: "+tOnChange);
-	  // System.out.println("tOffChange: "+tOffChange);
+//		for(int i = 0; i <=switchTimeArray.size() - 1; i++){
+//			tOnChange.add(new ArrayList());
+//			tOffChange.add(new ArrayList());
+//								
+//			//System.out.println("switchTimeArray SIZE: "+switchTimeArray.get(i).size());
+//			for(int j = 0; j <=switchTimeArray.get(i).size() - 1; j++){
+//				//System.out.println("RECEPTOR NUMBER: "+i);
+//				//yS = switchStateArray.get(i).get(j).doubleValue();
+//			
+//				
+//				//System.out.println(yS);
+//				
+//				
+//				//if first state in array is 0, implies the state before it was 1
+//				if(switchStateArray.get(i).get(0).doubleValue() == 0.0 || switchStateArray.get(i).get(0).doubleValue() == 0.1 ){
+//												
+//					if( j == 0 ){
+//						//System.out.println("xTT :"+xTT);
+//						//System.out.println("xT :"+xT);
+//						//add first element 
+//						//System.out.println("111first element j: "+j);
+//						//System.out.println("111into tOnChange: "+switchTimeArray.get(i).get(0).doubleValue());
+//					    tOnChange.get(i).add(switchTimeArray.get(i).get(0).doubleValue());
+//					    //System.out.println("tOnChange: "+tOnChange);
+//					    //System.out.println("tOffChange: "+tOffChange);
+//					}
+//					if( j > 0 && j%2 == 0){
+//						xT = 0.0;
+//						xTT = 0.0;
+//						
+//						xT = switchTimeArray.get(i).get(j-1).doubleValue();
+//						if(xT == 0){
+//							System.out.println("xT = "+ xT+ " at "+ "j:" +j);
+//							
+//						}
+//						xTT = switchTimeArray.get(i).get(j).doubleValue();
+//						//System.out.println("xTT :"+xTT);
+//						//System.out.println("xT :"+xT);
+//						//add even indexed elements to tOnChange since first state is 1
+//						//System.out.println("111even j: "+ j);
+//						//System.out.println("111into tOnChange: "+(xTT - xT) );
+//						duration = (xTT - xT);
+////						if(duration > 100){
+////							System.out.println("j: "+j);
+////							System.out.println("xTT: "+xTT);
+////							System.out.println("xT: "+xT);
+////							System.out.println(duration);
+////							
+////						}
+//						if(duration < 0 ){
+//							//System.out.println(duration);
+//							duration = duration*(-1);
+//							//System.out.println("new duration: "+duration);
+//						}
+//						//Math.abs(duration);
+//						
+//						tOnChange.get(i).add(duration);
+//						 //System.out.println("tOnChange: "+tOnChange);
+//						 //System.out.println("tOffChange: "+tOffChange);
+//						
+//						duration = 0.0;
+//					}
+//					if( j > 0 && j%2 != 0){
+//						xT = 0.0;
+//						xTT = 0.0;
+//						
+//						
+//						xT = switchTimeArray.get(i).get(j-1).doubleValue();
+//						if(xT == 0){
+//							System.out.println("xT = "+ xT+ " at "+ "j:" +j);
+//						}
+//						xTT = switchTimeArray.get(i).get(j).doubleValue();
+//						//System.out.println("xTT :"+xTT);
+//						//System.out.println("xT :"+xT);
+//						//add odd indexed elements to tOffChange since first state is 1
+//						//System.out.println("111odd j: "+ j);
+//						//System.out.println("111into tOffChange: "+(xTT - xT));
+//						duration = (xTT - xT);
+////						if(duration > 100){
+////							System.out.println("j: "+j);
+////							System.out.println("xTT: "+xTT);
+////							System.out.println("xT: "+xT);
+////							System.out.println(duration);
+////							
+////						}
+//						if(duration < 0 ){
+//							//System.out.println(duration);
+//							duration = duration*(-1);
+//							//System.out.println("new duration: "+duration);
+//						}
+//						//Math.abs(duration);
+//						
+//						tOffChange.get(i).add(duration);
+//						 //System.out.println("tOnChange: "+tOnChange);
+//						 //System.out.println("tOffChange: "+tOffChange);
+//						
+//						duration = 0.0;
+//					}						
+//					
+//				}
+//				//if first state in array is 1, implies the state before it was 0
+//				if(switchStateArray.get(i).get(0).doubleValue() == 1.0 || switchStateArray.get(i).get(0).doubleValue() == 1.1){
+//									
+//					if( j == 0 ){
+//						 //System.out.println("xTT :"+xTT);
+//						 //System.out.println("xT :"+xT);
+//						 //add first element
+//						 //System.out.println("222first element j: "+j);
+//						 //System.out.println("222into tOffChange: "+switchTimeArray.get(i).get(0).doubleValue());
+//						 tOffChange.get(i).add(switchTimeArray.get(i).get(0).doubleValue());
+//						 //System.out.println("tOnChange: "+tOnChange);
+//						 //System.out.println("tOffChange: "+tOffChange);
+//					}
+//					if( j > 0 && j%2 == 0){
+//						xT = 0.0;
+//						xTT = 0.0;
+//						
+//						
+//						xT = switchTimeArray.get(i).get(j-1).doubleValue();
+//						if(xT == 0){
+//							System.out.println("xT = "+ xT+ " at "+ "j:" +j);
+//						}
+//						xTT = switchTimeArray.get(i).get(j).doubleValue();
+//						//System.out.println("xTT :"+xTT);
+//						//System.out.println("xT :"+xT);
+//						//add even indexed elements to tOffChange since first state is 0 
+//						//System.out.println("222even j: "+ j);
+//						//System.out.println("222into tOffChange: "+(xTT - xT));
+//						
+//						duration = (xTT - xT);
+////						if(duration > 100){
+////							System.out.println("j: "+j);
+////							System.out.println("xTT: "+xTT);
+////							System.out.println("xT: "+xT);
+////							System.out.println(duration);
+////							
+////						}
+//						if(duration < 0 ){
+//							//System.out.println(duration);
+//							duration = duration*(-1);
+//							//System.out.println("new duration: "+duration);
+//						}
+//						 //Math.abs(duration);
+//						 tOffChange.get(i).add(duration);
+//						 //System.out.println("tOnChange: "+tOnChange);
+//						 //System.out.println("tOffChange: "+tOffChange);
+//						
+//						duration = 0.0;
+//					}
+//					if( j > 0 && j%2 !=0 ){
+//						xT = 0.0;
+//						xTT = 0.0;
+//						
+//						
+//						xT = switchTimeArray.get(i).get(j-1).doubleValue();
+//						if(xT == 0){
+//							System.out.println("xT = "+ xT+ " at "+ "j:" +j);
+//						}
+//						xTT = switchTimeArray.get(i).get(j).doubleValue();
+//						//System.out.println("xTT :"+xTT);
+//						//System.out.println("xT :"+xT);
+//						//add odd indexed elements to tOnChange since first state is 0
+//						//System.out.println("222odd j: "+ j);
+//						//System.out.println("222into tOnChange: "+(xTT - xT) );
+//						
+//						duration = (xTT - xT);
+////						if(duration > 100){
+////							System.out.println("j: "+j);
+////							System.out.println("xTT: "+xTT);
+////							System.out.println("xT: "+xT);
+////							System.out.println(duration);
+////							
+////						}
+//						if(duration < 0 ){
+//							//System.out.println(duration);
+//							duration = duration*(-1);
+//							//System.out.println("new duration: "+duration);
+//						}
+//						
+//						 //Math.abs(duration);
+//						 tOnChange.get(i).add(duration);
+//						 //System.out.println("tOnChange: "+tOnChange);
+//						 //System.out.println("tOffChange: "+tOffChange);
+//						
+//						duration = 0.0;
+//					}
+//				}
+//				
+//			}	
+//			
+//		}
+		
+	  
 		
 		//take average of each tOn and tOff per receptor
 		double onCount = 0.0;
@@ -2765,7 +2930,7 @@ public static void checkHopArray(int index){
 			
 			stateChangeTimes.append(String.valueOf(tOnAverage.get(i)) + "\t" + String.valueOf(tOffAverage.get(i)));
 		}
-		
+//		
 //		Plot stateChangePlot = new Plot("State Change vs. Time", "Time (s)","State");
 //		stateChangePlot.setLineWidth(2);
 //		stateChangePlot.setColor(Color.RED);
@@ -2812,64 +2977,64 @@ public static void checkHopArray(int index){
 		totalHopPlot.addPoints(xHop, yHop, 0);
 		
 		
-		//totalHopPlot.show();
+		totalHopPlot.show();
 //////////////////////////////WRITE
-		 FileOutputStream fileOSHop = null;
- String filePathHop = "C:\\Users\\Mike\\Desktop\\JavaOutput\\HopPlot.bin";
-		 
-		 File f = new File(filePathHop);
-		 if(f.exists() && !f.isDirectory()){
-			 //System.out.println(filePathHop+ " exists");
-			 StringBuilder newPath = new StringBuilder(filePathHop);
-			 newPath.delete(filePathHop.length() - 4, filePathHop.length());
-			 //System.out.println(newPath.toString());
-			 String iterationString = Integer.toString(iterationNumber);
-			 newPath.append(iterationString + ".bin");
-			 //System.out.println(newPath.toString());
-			 filePathHop = newPath.toString();
-			//System.out.println(filePathHop);
-		 }
-			try {
-				fileOSHop = new FileOutputStream(filePathHop);
-			
-			} catch (FileNotFoundException e1) {
-				
-				e1.printStackTrace();
-			}
-			ByteArrayOutputStream basHop = new ByteArrayOutputStream();
-			DataOutputStream dsHop = new DataOutputStream(basHop);
-			
-			try {
-				for(int i = 0; i <=xHop.length - 1; i++){
-					dsHop.writeFloat( (float) xHop[i]);
-					dsHop.writeFloat( (float) yHop[i]);
-				}
-				
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			byte[] byteData = basHop.toByteArray();
-			
-			
-			try {
-				fileOSHop.write(byteData, 0, byteData.length);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			try {
-				fileOSHop.flush();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			try {
-				fileOSHop.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+//		 FileOutputStream fileOSHop = null;
+//		 String filePathHop = "C:\\Users\\Mike\\Desktop\\JavaOutput\\HopPlot.bin";
+//		 
+//		 File f = new File(filePathHop);
+//		 if(f.exists() && !f.isDirectory()){
+//			 //System.out.println(filePathHop+ " exists");
+//			 StringBuilder newPath = new StringBuilder(filePathHop);
+//			 newPath.delete(filePathHop.length() - 4, filePathHop.length());
+//			 //System.out.println(newPath.toString());
+//			 String iterationString = Integer.toString(iterationNumber);
+//			 newPath.append(iterationString + ".bin");
+//			 //System.out.println(newPath.toString());
+//			 filePathHop = newPath.toString();
+//			//System.out.println(filePathHop);
+//		 }
+//			try {
+//				fileOSHop = new FileOutputStream(filePathHop);
+//			
+//			} catch (FileNotFoundException e1) {
+//				
+//				e1.printStackTrace();
+//			}
+//			ByteArrayOutputStream basHop = new ByteArrayOutputStream();
+//			DataOutputStream dsHop = new DataOutputStream(basHop);
+//			
+//			try {
+//				for(int i = 0; i <=xHop.length - 1; i++){
+//					dsHop.writeFloat( (float) xHop[i]);
+//					dsHop.writeFloat( (float) yHop[i]);
+//				}
+//				
+//			} catch (IOException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+//			byte[] byteData = basHop.toByteArray();
+//			
+//			
+//			try {
+//				fileOSHop.write(byteData, 0, byteData.length);
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			try {
+//				fileOSHop.flush();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			try {
+//				fileOSHop.close();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 ///////////////////////////////////WRITE END
 	}
 	
