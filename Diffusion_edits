@@ -16,22 +16,23 @@ import ij.text.TextWindow;
 public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 
-static final int[] height = {75, 75, 75, 75, 75};     //150   //300
-static final int[] width = {75, 75, 75, 75, 75};	   //150   //300
-static final int gap = 15;
+static final int[] height = {75, 150, 150, 150};     //150   //300
+static final int[] width = {75, 150, 150, 150};	   //150   //300
+static final int gap = 20;
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final double stepSize = 0.5;  //1.0   //0.5
-static final int move = 10000000; //move n positions   //50,000,000
-static final int nReceptors = 10; //should not exceed height*width 
-static final int[] hopProb = {0, 5, 50, 80, 100}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
-static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
-static final double[] kOn = {3000000.0, 3000000.0, 3000000.0, 3000000.0, 3000000.0};   //M^-1 * s^-1   //270000.0;  3000000.0
-static final double[] kOff = {10000000.0, 10000000.0, 10000000.0, 10000000.0, 10000000.0};  //s^1       3800.0     //0.00014; 
-static final double timeStep = 0.0000003; //0.0000003; //seconds
+static final int move = 3000; //move n positions   //50,000,000
+static final int nReceptors = 10;   //should not exceed height*width 
+static final int innerReceptors = 10;  //
+static final double[] hopProb = {0.1, 1.0}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
+static final double[] concentration = {0.00002, 0.1}; //M     //0.000001  {1.0, 0.0001}
+static final double[] kOn = {0.0, 1000.0};   //M^-1 * s^-1   //270000.0;  3000000.0
+static final double[] kOff = {0.0, 100.0};  //s^1       3800.0     //0.00014; 
+static final double timeStep = 0.03; //0.0000003; //seconds
 static final int eventInterval = 1;  //  interval based on move, not move*steps
-static final int generateActive = 50;
+static final int generateActive = 100;
 static final int iterations = 1;
-static final int conditions = 5;  //number of conditions to test, make sure this number matches array size of parameters
+static final int conditions = 1;  //number of conditions to test, make sure this number matches array size of parameters
 ///////////////////////////////////////////////////////////////
 
 //optimization --> track state changes at time points for state and time arrays instead of saving all moves
@@ -43,14 +44,15 @@ static final double[][] stepArray = new double[nReceptors][3];
 static final double[][] stateArray = new double[nReceptors][move];
 //static final double[][] copyTotalTimeArray = new double[nReceptors][move];
 static final double[] totalTimeArray = new double[move];
-
+static final double[][] recCollisionArray = new double[nReceptors][1];
 
 //optimization--> only take every 10th, 100th, etc. coordinate instead of all
 static ArrayList<Double> xArray = new ArrayList<Double>();
 static ArrayList<Double> yArray = new ArrayList<Double>();
 static ArrayList<Double> xOutArray = new ArrayList<Double>();
 static ArrayList<Double> yOutArray = new ArrayList<Double>();
-static ArrayList<Double> collisionArray = new ArrayList<Double>();
+static ArrayList<Double> activeCollisionArray = new ArrayList<Double>();
+static ArrayList<Double> inactiveCollisionArray = new ArrayList<Double>();
 static ArrayList<Double> timePointArray = new ArrayList<Double>();
 static ArrayList<Double> collisionPerTimeArray = new ArrayList<Double>();
 
@@ -67,6 +69,7 @@ static ArrayList<Double> hopInYLocationArray = new ArrayList<Double>();
 static ArrayList<Double> eventXLocationArray = new ArrayList<Double>();
 static ArrayList<Double> eventYLocationArray = new ArrayList<Double>();
 static ArrayList<Double> eventArray = new ArrayList<Double>();
+
 static double xElements = 0.0;
 static double yElements = 0.0;
 static double timePoint = 0.0;
@@ -229,7 +232,7 @@ static int conditionNumber = 0;
 							
 							Double eventObject = new Double(events);
 							Double timePointObject = new Double(timePoint);
-							collisionArray.add(eventObject);
+							activeCollisionArray.add(eventObject);
 							timePointArray.add(timePointObject);
 							collisionPerTimeArray.add(eventPerTime);
 							
@@ -283,9 +286,9 @@ static int conditionNumber = 0;
 /////////////////////////////PLOTS/////////////////////////////////////////////
 				
 				plotTrajectory();
-				plotEvents();
-				plotHop();
-				plotStates();
+				//plotEvents();
+				//plotHop();
+			    //plotStates();
 				//plotStateChanges();
 			
 			System.out.println("iterationNumber: "+iterationNumber);
@@ -299,7 +302,7 @@ static int conditionNumber = 0;
 	yArray.clear();
 	xOutArray.clear();
 	yOutArray.clear();
-	collisionArray.clear();
+	activeCollisionArray.clear();
 	timePointArray.clear();
 	collisionPerTimeArray.clear();
 	switchStateArray.clear();
@@ -356,6 +359,7 @@ static int conditionNumber = 0;
 		 Random rand = new Random();
 		 for(int i = 0; i <= nReceptors - 1; i++){
 		
+		 if( i < innerReceptors   ){
 			//int randReceptor = rand.nextInt(2); //0 inactive, 1 active
 			int randRow = rand.nextInt(height[conditionNumber]);//random row within height constraint 
 			int randCol = rand.nextInt(width[conditionNumber]);//random column within width constraint 
@@ -363,14 +367,21 @@ static int conditionNumber = 0;
 				//receptorArray[i][0] = randReceptor;
 			boolean goActive = randState();
 			if (goActive == true){
-				receptorArray[i][0] = 1.0f; ;
+				receptorArray[i][0] = 1.0; 
 			}
 			else{
-				receptorArray[i][0] = 0.0f;
+				receptorArray[i][0] = 0.0;
 			}
 				receptorArray[i][1] = randRow;
-				receptorArray[i][2] = randCol;						
-		}
+				receptorArray[i][2] = randCol;	
+		 }
+		 else{
+			 edgeGeneration(i);
+		 }
+		 
+		 }
+		 
+		
 		 	System.out.println("Initial Array is :");
 			System.out.println(Arrays.deepToString(receptorArray)); 
 			
@@ -497,27 +508,28 @@ public static void checkHopArray(int index){
 		 
 		 //System.out.println("pOn: "+pOn+"%");
 		 
+		 if(pOn >= 0.0){
+			 return false;
+		 }
+		 
 		 if(pOn >= 1.0){   //round from 1 spot
 			 pOn = Math.round(pOn*10)/10;
 			 }
 			 
 			 //else must be less than 1.0
-		 else if(pOn < 1.0){			   //round from second number after first non-zero number
+		 if(pOn < 1.0){			   //round from second number after first non-zero number
 				//System.out.println(pOn+"is less than 1.0");
-			 	
 				
 				//System.out.println("111switchActive(): "+pOn+" / "+100);
 				 //double aFraction = (pOn)/(100);
 				//System.out.println("fraction: "+aFraction);
-				 
-								
+				
 				 //System.out.println("pOff inside: "+pOn);
 				 while(pOn < 100.0){
 					 //System.out.println("while pOff before 10x:"+pOn);
 					 pOn = pOn*10;
 					 denominator = denominator*10;
 					 //System.out.println("while pOff after 10x:"+pOn);
-
 				 }
 
 			 }
@@ -548,12 +560,15 @@ public static void checkHopArray(int index){
 		 int switchOff = 0;
 		 //System.out.println("pOff: "+pOff+"%");
 		 
+		 if(pOff == 0.0){
+			 return false;
+		 }
 		 if(pOff >= 1.0){   //round from 1 spot
 			 pOff = Math.round(pOff*10)/10;
 			 }
 			 
 			 //else must be less than 1.0
-		 else if(pOff < 1.0){			   //round from second number after first non-zero number
+		  if(pOff < 1.0){			   //round from second number after first non-zero number
 				//System.out.println(pOff+"is less than 1.0");
 				 			 		
 				//System.out.println("111switchInactive(): "+pOff+" / "+100);
@@ -1240,15 +1255,43 @@ public static void checkHopArray(int index){
 	 
 	 public static boolean hopProbability(){
 		 
+		 int hopDenominator = 100;
+
+		
 		 Random rand = new Random();
-		 
-		 int randHop = 1 + rand.nextInt( (100) - 1 + 1); // 1 to 100 both inclusive
-		 //System.out.println(randHop);
-		 
-		 if(randHop < hopProb[conditionNumber]){
-			 //System.out.println("Hop");
-			 return true;
+		 if(hopProb[conditionNumber] >= 1.0){
 			 
+			 //from + rand.nextInt(to - from + 1)
+			int randHop = 1 + rand.nextInt( (100) - 1 + 1); // 1 to 100 both inclusive
+			 //System.out.println(hopProb[conditionNumber]+" / "+ hopDenominator);
+			 //System.out.println("randHop: "+randHop);
+		 
+			 if(randHop < hopProb[conditionNumber]){
+			 System.out.println("Hop");
+			 return true;
+			 }
+		 }
+		 
+		 if(hopProb[conditionNumber] < 1.0){
+		
+			 //so that multiplied hopProb doesn't get carried over into next iteration,
+			 //otherwise the other if statement would be satisfied in next iteration
+			 double tempHopProb = hopProb[conditionNumber];
+		
+			 while(tempHopProb < 100.0){
+				 tempHopProb = tempHopProb*10;
+				 hopDenominator = hopDenominator*10;
+			 }
+			 
+			int randHop = 1 + rand.nextInt( (hopDenominator) - 1 + 1);
+			 
+			 //System.out.println(tempHopProb +" / "+ hopDenominator);
+			 //System.out.println(("fraction "+tempHopProb/hopDenominator));
+			 //System.out.println("randHop: "+randHop);
+			 if(randHop < tempHopProb){
+				 //System.out.println("hop");
+				 return true;
+			 }
 		 }
 		 	 //System.out.println("Don't hop");
 		 return false;
@@ -1413,16 +1456,16 @@ public static void checkHopArray(int index){
 				 }
 			 }  
 ////////////////***zz		
-//			 xElements = receptorArray[i][1];//////////////////////////zz
-//			 yElements = receptorArray[i][2];//////////////////////////zz
-//			//System.out.println("moveArray size: "+(moveArray.length-1));
-//			//System.out.println("xElement: "+xElements);
-//					 
-//			 xArray.add(xElements);///////////////////////////////////zz
-//			 yArray.add(yElements);///////////////////////////////////zz
-//			//System.out.println("hopTimeArray: "+hopTimeArray);
-//			 // System.out.println("xArray is: ");
-//			// System.out.println(xArray);
+			 xElements = receptorArray[i][1];//////////////////////////zz
+			 yElements = receptorArray[i][2];//////////////////////////zz
+			//System.out.println("moveArray size: "+(moveArray.length-1));
+			//System.out.println("xElement: "+xElements);
+					 
+			 xArray.add(xElements);///////////////////////////////////zz
+			 yArray.add(yElements);///////////////////////////////////zz
+			//System.out.println("hopTimeArray: "+hopTimeArray);
+			 // System.out.println("xArray is: ");
+			// System.out.println(xArray);
 ////////////////***zz			 
 			 
 		 }/////////** END OF if(0.0f or 1.0f)**////////
@@ -1579,34 +1622,44 @@ public static void checkHopArray(int index){
 					// System.out.println("888don't hop AFTER correction: "+Arrays.deepToString(receptorArray));
 					 }
 				 }  
-		//Boundary conditions if goes past outer edge, disappears and generate new at random edge location
+		//periodic boundary condition, continue on other side if breach outer edge
 				 else if(receptorArray[i][1] < (0 - gap)){  //pass left edge				 
-					 edgeGeneration(i);
+					 //edgeGeneration(i);
+					 
+					 receptorArray[i][1] = (width[conditionNumber] + gap); //continue from right edge
 					 
 				 }
-				 else if(receptorArray[i][1] > (width[conditionNumber] + gap)){  //pass right edge
-					 edgeGeneration(i);
+				 else if(receptorArray[i][1] > (width[conditionNumber] + gap)){  //pass right edge		
+					 //edgeGeneration(i);
+					 
+					 receptorArray[i][1] = (0 - gap); //continue from left edge
+					 
 				 }
 				 else if(receptorArray[i][2] < (0 - gap)){  //pass bottom edge
-					 edgeGeneration(i);
+					//edgeGeneration(i);
+					 
+					 receptorArray[i][2] = height[conditionNumber] + gap; //continue from top edge
+					 
 				 }
 				 else if(receptorArray[i][2] > (height[conditionNumber] + gap)){  //pass top edge
-					 edgeGeneration(i);
+					 //edgeGeneration(i);
+					 
+					 receptorArray[i][2] = (0 - gap); //continue from bottom edge
 				 }
 				 
 //////////////***END OF BOUNDARY CONDITIONS***///////////////////////////
 
 /////////////////***zz				 
-//				 xElements = receptorArray[i][1];//////////////////////////zz
-//				 yElements = receptorArray[i][2];//////////////////////////zz
-//				//System.out.println("moveArray size: "+(moveArray.length-1));
-//				//System.out.println("xElement: "+xElements);
-//						 
-//				 xArray.add(xElements);///////////////////////////////////zz
-//				 yArray.add(yElements);///////////////////////////////////zz
-//				//System.out.println("hopTimeArray: "+hopTimeArray);
-//				 // System.out.println("xArray is: ");
-//				// System.out.println(xArray);
+				 xElements = receptorArray[i][1];//////////////////////////zz
+				 yElements = receptorArray[i][2];//////////////////////////zz
+				//System.out.println("moveArray size: "+(moveArray.length-1));
+				//System.out.println("xElement: "+xElements);
+						 
+				 xArray.add(xElements);///////////////////////////////////zz
+				 yArray.add(yElements);///////////////////////////////////zz
+				//System.out.println("hopTimeArray: "+hopTimeArray);
+				 // System.out.println("xArray is: ");
+				// System.out.println(xArray);
 /////////////////***zz				 
 				 
 			 }///////// **END OF if(0.1f or 1.1f)**/////// 
@@ -1645,7 +1698,7 @@ public static void checkHopArray(int index){
 			yEdge = (0 - gap);
 			
 			receptorArray[index][1] = xEdge;
-			receptorArray[index][2] = yEdge;
+			receptorArray[index][2] = yEdge + (gap/2);
 			
 			boolean goActive = randState();
 			if(goActive == true){
@@ -1662,8 +1715,8 @@ public static void checkHopArray(int index){
 			 xEdge = (0 - gap);
 			 yEdge = (0 - gap) + rand.nextInt( (height[conditionNumber] + gap) - (0 - gap) + 1);
 			 
-			 receptorArray[index][1] = xEdge;
-			 receptorArray[index][2] = yEdge;
+			 receptorArray[index][1] = xEdge + (gap/2);
+			 receptorArray[index][2] = yEdge ;
 			 
 			 boolean goActive = randState();
 				if(goActive == true){
@@ -1680,7 +1733,7 @@ public static void checkHopArray(int index){
 			 yEdge = (height[conditionNumber] + gap);
 			 
 			 receptorArray[index][1] = xEdge;
-			 receptorArray[index][2] = yEdge;
+			 receptorArray[index][2] = yEdge - (gap/2);
 			 
 			 boolean goActive = randState();
 				if(goActive == true){
@@ -1696,7 +1749,7 @@ public static void checkHopArray(int index){
 			 xEdge = (width[conditionNumber] + gap);
 			 yEdge = (0 - gap) + rand.nextInt( (height[conditionNumber] + gap) - (0 - gap) + 1 );
 			 
-			 receptorArray[index][1] = xEdge;
+			 receptorArray[index][1] = xEdge - (gap/2);
 			 receptorArray[index][2] = yEdge;
 			 
 			 boolean goActive = randState();
@@ -1730,10 +1783,10 @@ public static void checkHopArray(int index){
 			yEdge2 = (0 - gap);
 			
 			receptorArray[index1][1] = xEdge1;
-			receptorArray[index1][2] = yEdge1;
+			receptorArray[index1][2] = yEdge1 + (gap/2);
 			
 			receptorArray[index2][1] = xEdge2;
-			receptorArray[index2][2] = yEdge2;
+			receptorArray[index2][2] = yEdge2 + (gap/2);
 			
 			
 			boolean goActive1 = randState();
@@ -1761,10 +1814,10 @@ public static void checkHopArray(int index){
 			 xEdge2 = (0 - gap);
 			 yEdge2 = (0 - gap) + rand.nextInt( (height[conditionNumber] + gap) - (0 - gap) + 1);
 			 
-			 receptorArray[index1][1] = xEdge1;
+			 receptorArray[index1][1] = xEdge1 + (gap/2);
 			 receptorArray[index1][2] = yEdge1;
 			 
-			 receptorArray[index2][1] = xEdge2;
+			 receptorArray[index2][1] = xEdge2 + (gap/2);
 			 receptorArray[index2][2] = yEdge2;
 			 
 			 boolean goActive1 = randState();
@@ -1792,10 +1845,10 @@ public static void checkHopArray(int index){
 			 yEdge2 = (height[conditionNumber] + gap);
 			 
 			 receptorArray[index1][1] = xEdge1;
-			 receptorArray[index1][2] = yEdge1;
+			 receptorArray[index1][2] = yEdge1 - (gap/2);
 			 
 			 receptorArray[index2][1] = xEdge2;
-			 receptorArray[index2][2] = yEdge2;
+			 receptorArray[index2][2] = yEdge2 - (gap/2);
 			 
 			 boolean goActive1 = randState();
 				if(goActive1 == true){
@@ -1821,10 +1874,10 @@ public static void checkHopArray(int index){
 			 xEdge2 = (width[conditionNumber] + gap);
 			 yEdge2 = (0 - gap) + rand.nextInt( (height[conditionNumber] + gap) - (0 - gap) + 1 );
 			 
-			 receptorArray[index1][1] = xEdge1;
+			 receptorArray[index1][1] = xEdge1 - (gap/2);
 			 receptorArray[index1][2] = yEdge1;
 			 
-			 receptorArray[index2][1] = xEdge2;
+			 receptorArray[index2][1] = xEdge2 - (gap/2);
 			 receptorArray[index2][2] = yEdge2;
 			 
 			 boolean goActive1 = randState();
@@ -1852,6 +1905,13 @@ public static void checkHopArray(int index){
 		 for(int i = 0; i <= receptorArray.length - 1; i++){
 			 for(int j = 0; j <= receptorArray.length - 1; j++){
 				 
+				 //if two collide and at least one is inactive
+				 if(receptorArray[i][0] == 0.0 || receptorArray[j][0]== 0.0 && receptorArray[i][1] == receptorArray[j][1] && receptorArray[i][2] == receptorArray[j][2] && i != j){
+					 
+					 
+					 
+				 }
+				 //if two collide and both are active
 				 if(receptorArray[i][0] == 1.0 && receptorArray[j][0]== 1.0 && receptorArray[i][1] == receptorArray[j][1] && receptorArray[i][2] == receptorArray[j][2] && i != j){
 					 //if there is event, long straight line on plot,
 					 //indicates path between endo receptors and newly generated receptors
@@ -1903,15 +1963,15 @@ public static void checkHopArray(int index){
 	 }///////eventCheck() end
 	 
 	 public static void plotTrajectory(){
-/////////////////////////////////////////zz 
-//		 ArrayList<ArrayList<Double>> xFinalArray = new ArrayList<ArrayList<Double>>(); 
-//		 ArrayList<ArrayList<Double>> yFinalArray = new ArrayList<ArrayList<Double>>(); 
-//	
-//		 double xP = 0.0;
-//		 double yP = 0.0;
-//		
-//		 double[][] xPlot = new double[nReceptors][move];
-//		 double[][] yPlot = new double[nReceptors][move];
+///////////////////////////////////////////zz 
+		 ArrayList<ArrayList<Double>> xFinalArray = new ArrayList<ArrayList<Double>>(); 
+		 ArrayList<ArrayList<Double>> yFinalArray = new ArrayList<ArrayList<Double>>(); 
+	
+		 double xP = 0.0;
+		 double yP = 0.0;
+		
+		 double[][] xPlot = new double[nReceptors][move];
+		 double[][] yPlot = new double[nReceptors][move];
 //	
 /////////////////////////////////////////zz
 	 
@@ -1946,86 +2006,86 @@ public static void checkHopArray(int index){
 		// System.out.println("Before even/odd for loop xArray: "+xArray);
 		// System.out.println("Before even/odd for loop yArray: "+yArray);
 /////////////////////////////////////////zz
-//		 if((xArray.size())%2 == 0){  //even
-//		 	for(int i = 0; i <= nReceptors - 1; i++){
-//		 		
-//		 		//create new array for each ith set of positions
-//		 		ArrayList<Double> xFinalInnerArray = new ArrayList<Double>(); 
-//		 		ArrayList<Double> yFinalInnerArray = new ArrayList<Double>(); 
-//		 		for(int j = 0 + i; j <= xArray.size() - 1; j+= nReceptors){
-//				 
-//		 			//System.out.println("even");
-//		 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j + " i = "+i);
-//		 			
-//		 			xFinalInnerArray.add(xArray.get(j));
-//		 			yFinalInnerArray.add(yArray.get(j));
-//		 			
-//		 		}
-//		 	//System.out.println("xFinalInnerArray: " +xFinalInnerArray);
-//		 	//System.out.println("yFinalInnerArray: "+yFinalInnerArray);
-//		 	xFinalArray.add(xFinalInnerArray);
-//		 	yFinalArray.add(yFinalInnerArray);
-//		 	//System.out.println("xFinalArray: "+xFinalArray);
-//		 	//System.out.println("yFinalArray: "+yFinalArray);
-//		 	}
-//		 //	System.out.println("aaaxFinalArray: "+xFinalArray);
-//		//	System.out.println("aaayFinalArray: "+yFinalArray);
-//		 }
-//		 	 
-//		 else{    //odd
-//			 for(int i = 0; i <= nReceptors - 1; i++){
-//				 
-//				//create new array for each ith set of positions
-//		 		 ArrayList<Double> xFinalInnerArray = new ArrayList<Double>(); 
-//		 		 ArrayList<Double> yFinalInnerArray = new ArrayList<Double>(); 
-//		 		 
-//			 		for(int j = 0 + i; j <= (xArray.size() - (nReceptors - a )); j+= nReceptors){
-//					 
-//			 			//System.out.println("odd");
-//			 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j+ " i = "+i);
-//			 			
-//			 			xFinalInnerArray.add(xArray.get(j));////////
-//			 			yFinalInnerArray.add(yArray.get(j));
-//					
-//				 }
-//			 		//System.out.println("a: "+a);
-//			 		a++;
-//			 		//System.out.println("xFinalInnerArray:" +xFinalInnerArray);
-//				 	xFinalArray.add(xFinalInnerArray);
-//				 	yFinalArray.add(yFinalInnerArray);
-//				 	//System.out.println("xFinalArray: "+xFinalArray);
-//				 	//System.out.println("yFinalArray: "+yFinalArray);
-//			 }
-//		 } 
-//
-//		 
-//		//System.out.println("bbbxFinalArray: "+xFinalArray);
-//	//	System.out.println("bbbyFinalArray: "+yFinalArray);
-//		
-//		 	
-//	for(int i = 0; i<=xFinalArray.size() - 1; i++){	 	
-//	
-//		 Double[] xO = xFinalArray.get(i).toArray(new Double[xFinalArray.size()]);
-//		 Double[] yO = yFinalArray.get(i).toArray(new Double[yFinalArray.size()]);
-//		 
-//		 for(int j = 0; j <= xFinalArray.get(i).size() - 1; j++){
-//						
-//			// System.out.println("xO: "+xO[j]);
-//			// System.out.println("yO: "+yO[j]);
-//			 xP = xO[j].doubleValue();
-//			 yP = yO[j].doubleValue();
-//			 
-//			 xPlot[i][j] = xP;
-//			 yPlot[i][j] = yP;
-//			 //System.out.println("xP: "+xP);
-//			 //System.out.println("yP: "+yP);
-//			 
-//		 }
-//	}	/////////////////////////////////////////zz
+		 if((xArray.size())%2 == 0){  //even
+		 	for(int i = 0; i <= nReceptors - 1; i++){
+		 		
+		 		//create new array for each ith set of positions
+		 		ArrayList<Double> xFinalInnerArray = new ArrayList<Double>(); 
+		 		ArrayList<Double> yFinalInnerArray = new ArrayList<Double>(); 
+		 		for(int j = 0 + i; j <= xArray.size() - 1; j+= nReceptors){
+				 
+		 			//System.out.println("even");
+		 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j + " i = "+i);
+		 			
+		 			xFinalInnerArray.add(xArray.get(j));
+		 			yFinalInnerArray.add(yArray.get(j));
+		 			
+		 		}
+		 	//System.out.println("xFinalInnerArray: " +xFinalInnerArray);
+		 	//System.out.println("yFinalInnerArray: "+yFinalInnerArray);
+		 	xFinalArray.add(xFinalInnerArray);
+		 	yFinalArray.add(yFinalInnerArray);
+		 	//System.out.println("xFinalArray: "+xFinalArray);
+		 	//System.out.println("yFinalArray: "+yFinalArray);
+		 	}
+		 //	System.out.println("aaaxFinalArray: "+xFinalArray);
+		//	System.out.println("aaayFinalArray: "+yFinalArray);
+		 }
+		 	 
+		 else{    //odd
+			 for(int i = 0; i <= nReceptors - 1; i++){
+				 
+				//create new array for each ith set of positions
+		 		 ArrayList<Double> xFinalInnerArray = new ArrayList<Double>(); 
+		 		 ArrayList<Double> yFinalInnerArray = new ArrayList<Double>(); 
+		 		 
+			 		for(int j = 0 + i; j <= (xArray.size() - (nReceptors - a )); j+= nReceptors){
+					 
+			 			//System.out.println("odd");
+			 			//System.out.println("xArray.get(j): "+xArray.get(j)+" at j index "+ j+ " i = "+i);
+			 			
+			 			xFinalInnerArray.add(xArray.get(j));////////
+			 			yFinalInnerArray.add(yArray.get(j));
+					
+				 }
+			 		//System.out.println("a: "+a);
+			 		a++;
+			 		//System.out.println("xFinalInnerArray:" +xFinalInnerArray);
+				 	xFinalArray.add(xFinalInnerArray);
+				 	yFinalArray.add(yFinalInnerArray);
+				 	//System.out.println("xFinalArray: "+xFinalArray);
+				 	//System.out.println("yFinalArray: "+yFinalArray);
+			 }
+		 } 
+
+		 
+		//System.out.println("bbbxFinalArray: "+xFinalArray);
+	//	System.out.println("bbbyFinalArray: "+yFinalArray);
+		
+		 	
+	for(int i = 0; i<=xFinalArray.size() - 1; i++){	 	
+	
+		 Double[] xO = xFinalArray.get(i).toArray(new Double[xFinalArray.size()]);
+		 Double[] yO = yFinalArray.get(i).toArray(new Double[yFinalArray.size()]);
+		 
+		 for(int j = 0; j <= xFinalArray.get(i).size() - 1; j++){
+						
+			// System.out.println("xO: "+xO[j]);
+			// System.out.println("yO: "+yO[j]);
+			 xP = xO[j].doubleValue();
+			 yP = yO[j].doubleValue();
+			 
+			 xPlot[i][j] = xP;
+			 yPlot[i][j] = yP;
+			 //System.out.println("xP: "+xP);
+			 //System.out.println("yP: "+yP);
+			 
+		 }
+	}	/////////////////////////////////////////zz
 //System.out.println("xPlot"+Arrays.deepToString(xPlot));
 //System.out.println("yPlot"+Arrays.deepToString(yPlot));
 
-//Hopping out
+///////////////Hopping out
 	for(int i = 0; i <= hopOutXLocationArray.size() - 1; i++){
 		
 		xOutL = hopOutXLocationArray.get(i).doubleValue();
@@ -2063,8 +2123,8 @@ public static void checkHopArray(int index){
 	
 		//System.out.println("R1 first point: "+xPlot[0][1]+" , "+yPlot[0][2]);
 	
-		 //Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)",xPlot[0],yPlot[0]);//zz
-		 Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)");
+		 Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)",xPlot[0],yPlot[0]);//zz
+		 //Plot positionPlot = new Plot("positionPlot","X position (nm)","Y position (nm)");
 
 		 
 		 //draw inner boundary 
@@ -2106,17 +2166,17 @@ public static void checkHopArray(int index){
 		 //set methods apply to the first data set it encounters
 		 //so put directly before method that draws respective data set
 		 
-//		 for(int i = 1; i<=nReceptors - 1; i++){	 /////////zz
-//				//line width for subsequent receptors 
-//				
-//			 
-//			 	positionPlot.setLineWidth(2);
-//				positionPlot.setColor(Color.GRAY);
-//				positionPlot.addPoints(xPlot[i],yPlot[i],2); 
-//				//System.out.println("plot receptor: "+i);		
-//				
-//				
-//			 }/////////zz
+		 for(int i = 1; i<=nReceptors - 1; i++){	 /////////zz
+				//line width for subsequent receptors 
+				
+			 
+			 	positionPlot.setLineWidth(2);
+				positionPlot.setColor(Color.GRAY);
+				positionPlot.addPoints(xPlot[i],yPlot[i],2); 
+				//System.out.println("plot receptor: "+i);		
+				
+				
+			 }/////////zz
 //		 
 
 		 
@@ -2229,13 +2289,13 @@ public static void checkHopArray(int index){
 		double yP2 = 0.0;
 		double yP2Change = 0.0;
 		double[] xEvent = new double[timePointArray.size()]; 
-		double[] yEvent = new double[collisionArray.size()];
+		double[] yEvent = new double[activeCollisionArray.size()];
 		double[] yEventChange = new double[collisionPerTimeArray.size()];
 		
-		for(int i = 0; i<= collisionArray.size() - 1; i++){
+		for(int i = 0; i<= activeCollisionArray.size() - 1; i++){
 			
 		  xP2 =	timePointArray.get(i).doubleValue();
-		  yP2 = collisionArray.get(i).doubleValue();
+		  yP2 = activeCollisionArray.get(i).doubleValue();
 		  yP2Change = collisionPerTimeArray.get(i).doubleValue();
 		 
 		  xEvent[i] = ((1+steps)*xP2);
@@ -2255,13 +2315,13 @@ public static void checkHopArray(int index){
 		eventPlot.show();
 		
 		
-
+		
 		Plot eventChangePlot = new Plot("Events vs. time","Time (s) ","Dimerizations");
 		eventChangePlot.setLineWidth(2);
 		eventChangePlot.setColor(Color.BLUE);
 		eventChangePlot.addPoints(xEvent, yEventChange, 0);
 		
-		eventChangePlot.show();
+		//eventChangePlot.show();
 		
 //////////////////////////WRITE
 //		
