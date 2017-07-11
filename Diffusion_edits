@@ -15,22 +15,22 @@ import ij.text.TextWindow;
 public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 
-static final int[] height = {20, 20, 20};     //150   //300
-static final int[] width = {20, 20, 20};	   //150   //300
-static final int[] gap = {53, 53, 80};  //nDensity: 2,1,0.1,0.05
+static final int[] height = {20, 20, 20, 20,20, 20, 20, 20, 20, 20};     //150   //300
+static final int[] width = {20, 20, 20, 20,20, 20, 20, 20, 20, 20};	   //150   //300
+static final int[] gap = {53, 53, 53, 53, 53, 53, 53, 53, 53, 53};  //nDensity: 2,1,0.1,0.05
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final double stepSize = 2.0;  //1.0   //0.5
-static final int move = 20000000; //move n positions   //391200  //2000000
+static final int move = 20000000; //move n positions   //20000000
 static final int nReceptors = 4;   //should not exceed height*width 
 //static final int innerReceptors = 2;  //
-static final double[] hopProb = {0.00024, 0.0009, 0.0009}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
-static final double[] concentration = { 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
-static final double[] kOn = {0.0, 0.0, 0.0};   //M^-1 * s^-1   //270000.0;  3000000.0
-static final double[] kOff = {0.0, 0.0, 0.0};  //s^1       3800.0     //0.00014; 
+static final double[] hopProb = {0.00024, 0.00049, 0.00098, 0.002, 0.0039, 0.0078, 0.016, 0.031, 0.063, 0.13}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
+static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
+static final double[] kOn = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};   //M^-1 * s^-1   //270000.0;  3000000.0
+static final double[] kOff = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};  //s^1       3800.0     //0.00014; 
 static final double timeStep = 0.00000014; //0.0000003; //0.00000014 //seconds
 //static final int eventInterval = 1;  //  interval based on move, not move*steps
 static final int generateActive = 100;
-static final int iterations = 50;
+static final int iterations = 50;  //50
 static final int conditions = 1;  //number of conditions to test, make sure this number matches array size of parameters
 ///////////////////////////////////////////////////////////////
 
@@ -149,8 +149,8 @@ static int conditionNumber = 0;
 					 //of moves within method (for conjunction with stateSwitchArray)
 					
 						int m = i;
-						if(m%1000000 == 0){
-						System.out.println("m: "+m);
+						if(m%5000000 == 0){
+						//System.out.println("m: "+m);
 						}
 						
 						movementArray(m);	
@@ -1336,7 +1336,7 @@ public static void checkHopArray(int index){
 			int randHop = 1 + rand.nextInt( (hopDenominator) - 1 + 1);
 			 
 			 //System.out.println(tempHopProb +" / "+ hopDenominator);
-			 //System.out.println(("fraction "+tempHopProb/hopDenominator));
+			//System.out.println(("fraction "+tempHopProb/hopDenominator));
 			 //System.out.println("randHop: "+randHop);
 			 if(randHop < tempHopProb){
 				 //System.out.println("hop");
@@ -1384,7 +1384,16 @@ public static void checkHopArray(int index){
 					 hopOutYLocationArray.add(receptorArray[i][2]);
 					 hops++;
 					 hopArray.add(hops);
-					 hopTimeArray.add((double) mm*timeStep);			
+					 
+					 
+					 //for non-continuity
+					 //hopTimeArray.add((double) mm*timeStep);
+					 
+					 //for continuity
+					 hopTimeArray.add((double) (mm +(iterationNumber*move))*timeStep);
+					 
+					 
+					 
 					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 					 if(receptorArray[i][0] == 1.0){
 						 receptorArray[i][0] = 1.1;
@@ -1418,7 +1427,15 @@ public static void checkHopArray(int index){
 					 hopOutYLocationArray.add(receptorArray[i][2]);
 					 hops++;
 					 hopArray.add(hops);
-					 hopTimeArray.add((double) mm*timeStep);
+					 
+					 
+					 //for non-continuity
+					 //hopTimeArray.add((double) mm*timeStep);
+					 
+					 //for continuity
+					 hopTimeArray.add((double) (mm +(iterationNumber*move))*timeStep);;
+					 
+					 
 					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 					 if(receptorArray[i][0] == 1.0){
 						 receptorArray[i][0] = 1.1;
@@ -1453,7 +1470,14 @@ public static void checkHopArray(int index){
 					 hopOutYLocationArray.add(0.0);
 					 hops++;
 					 hopArray.add(hops);
-					 hopTimeArray.add((double) mm*timeStep);
+					 
+					 //for non-continuity
+					 //hopTimeArray.add((double) mm*timeStep);
+					 
+					 //for continuity
+					 hopTimeArray.add((double) (mm +(iterationNumber*move))*timeStep);
+					 
+					 
 					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 					 if(receptorArray[i][0] == 1.0){
 						 receptorArray[i][0] = 1.1;
@@ -1487,7 +1511,15 @@ public static void checkHopArray(int index){
 					 hopOutYLocationArray.add((double) height[conditionNumber]);
 					 hops++;
 					 hopArray.add(hops);
-					 hopTimeArray.add((double) mm*timeStep);
+					 
+					 
+					 //for non-continuity
+					 //hopTimeArray.add((double) mm*timeStep);
+					 
+					 //for continuity
+					 hopTimeArray.add((double) (mm +(iterationNumber*move))*timeStep);
+					 
+					 
 					// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 					 if(receptorArray[i][0] == 1.0){
 						 receptorArray[i][0] = 1.1;
@@ -1541,7 +1573,15 @@ public static void checkHopArray(int index){
 						 hopInYLocationArray.add(receptorArray[i][2]);
 						 hops++;
 						 hopArray.add(hops);
-						 hopTimeArray.add((double) mm*timeStep);			
+						 
+						 
+						 //for non-continuity
+						 //hopTimeArray.add((double) mm*timeStep);
+						 
+						 //for continuity
+						 hopTimeArray.add((double) (mm +(iterationNumber*move))*timeStep);
+						 
+						 
 						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 						 if(receptorArray[i][0] == 1.1){
 							 receptorArray[i][0] = 1.0;
@@ -1579,7 +1619,15 @@ public static void checkHopArray(int index){
 						 hopInYLocationArray.add(receptorArray[i][2]);
 						 hops++;
 						 hopArray.add(hops);
-						 hopTimeArray.add((double) mm*timeStep);
+						 
+						 
+						 //for non-continuity
+						 //hopTimeArray.add((double) mm*timeStep);
+						 
+						 //for continuity
+						 hopTimeArray.add((double) (mm +(iterationNumber*move))*timeStep);
+						 
+						 
 						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 						 if(receptorArray[i][0] == 1.1){
 							 receptorArray[i][0] = 1.0;
@@ -1616,7 +1664,15 @@ public static void checkHopArray(int index){
 						 hopInYLocationArray.add(0.0);
 						 hops++;
 						 hopArray.add(hops);
-						 hopTimeArray.add((double) mm*timeStep);
+						 
+						 
+						 //for non-continuity
+						 //hopTimeArray.add((double) mm*timeStep);
+						 
+						 //for continuity
+						 hopTimeArray.add((double) (mm +(iterationNumber*move))*timeStep);
+						 
+						 
 						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 						 if(receptorArray[i][0] == 1.1){
 							 receptorArray[i][0] = 1.0;
@@ -1653,7 +1709,15 @@ public static void checkHopArray(int index){
 						 hopInYLocationArray.add((double) height[conditionNumber]);
 						 hops++;
 						 hopArray.add(hops);
-						 hopTimeArray.add((double) mm*timeStep);
+						 
+						 
+						 //for non-continuity
+						 //hopTimeArray.add((double) mm*timeStep);
+						 
+						 //for continuity
+						 hopTimeArray.add((double) (mm +(iterationNumber*move))*timeStep);
+						 
+						 
 						// System.out.println("receptorArray at hop location"+Arrays.deepToString(receptorArray));
 						 if(receptorArray[i][0] == 1.1){
 							 receptorArray[i][0] = 1.0;
@@ -2441,14 +2505,14 @@ public static void checkHopArray(int index){
 		  
 		}
 		////////**PLOT**////////
-//		
+		
 //		Plot eventPlot = new Plot("Total Events vs. Time","Time (s)","Total Number of Dimerizations");
 //		
 //		eventPlot.setLineWidth(2);
 //		eventPlot.setColor(Color.RED);
 //		eventPlot.addPoints(xEvent, yEvent, 0);
-		
-		//eventPlot.show();
+//		
+//		eventPlot.show();
 		
 		
 		
@@ -3152,10 +3216,10 @@ public static void checkHopArray(int index){
 		
 		//For some reason, plot doesn't generate if there is just one hop, so add plot 0 hop initially
 		//maybe need more than one data point per array? hence +1 
-		double[] xHop = new double[hopTimeArray.size()+1];
-		double[] yHop = new double[hopArray.size()+1];
-		xHop[0] = 0.0;
-		yHop[0] = 0.0;
+		double[] xHop = new double[hopTimeArray.size()];
+		double[] yHop = new double[hopArray.size()];
+		//xHop[0] = 0.0;
+		//yHop[0] = 0.0;
 	
 		for(int i = 0; i <= hopTimeArray.size() - 1 ; i++){
 			
@@ -3177,9 +3241,9 @@ public static void checkHopArray(int index){
 //		totalHopPlot.setLineWidth(2);
 //		totalHopPlot.setColor(Color.RED);
 //		totalHopPlot.addPoints(xHop, yHop, 0);
-		
-		
-		//totalHopPlot.show();
+//		
+//		
+//		totalHopPlot.show();
 		
 		
 //////////////////////////////WRITE
