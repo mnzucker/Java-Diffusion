@@ -15,24 +15,24 @@ import ij.text.TextWindow;
 public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 
-static final int[] height = {20, 20, 20, 20, 20, 20, 20, 20,20,    40, 40};     //150   //300
-static final int[] width = {20, 20, 20, 20,20, 20, 20, 20,20,      40, 40};	   //150   //300
-static final int[] gap = {53, 5, 15, 14, 13, 12, 11, 10, 4, 3, 0};  //
+static final int[] height = {40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40};     //150   //300
+static final int[] width = {40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40};	   //150   //300
+static final int[] gap = {107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107};  //
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final double stepSize = 2.0;  //1.0   //0.5
-static final int move = 100000; //move n positions   //50000000
-static final int nReceptors = 3;   //should not exceed height*width 
+static final int move = 50000000; //move n positions   //50000000
+static final int nReceptors = 4;   //should not exceed height*width 
 //static final int innerReceptors = 2;  //											{0.00096, 0.0018, 0.00392, 0.008, 0.0156, 0.0312, 0.0624, 0.125, 0.25, 0.5}
-static final double[] hopProb = {0.0,0.0,0.0036,0.0036,0.0036,0.0036,0.0036,0.0036,0.0036,0.0036,0.0036}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
-static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,1.0}; //M     //0.000001  {1.0, 0.0001}
-static final double[] kOn = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0};   //M^-1 * s^-1   //270000.0;  3000000.0
-static final double[] kOff = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0};  //s^1       3800.0     //0.00014;
+static final double[] hopProb = {0.0005, 0.00096, 0.0018, 0.00392, 0.008, 0.0156, 0.0312, 0.0624, 0.125, 0.25, 0.5, 100.0}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
+static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
+static final double[] kOn = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};   //M^-1 * s^-1   //270000.0;  3000000.0
+static final double[] kOff = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};  //s^1       3800.0     //0.00014;
 static final int inactiveSteps = 7694;   //0.00000013 sec/steps * 7694 steps = 1 millisecond
 static final double timeStep = 0.00000013; //0.0000003; //0.00000014  //0.000000128 //seconds
 //static final int eventInterval = 1;  //  interval based on move, not move*steps
 static final int generateActive = 100;
-static final int iterations = 1;  //50
-static final int conditions = 1;  //number of conditions to test, make sure this number matches array size of parameters
+static final int iterations = 20;  //50
+static final int conditions = 12;  //number of conditions to test, make sure this number matches array size of parameters
 /////////////////////////////////////////////////////////////
 
 //optimization --> track state changes at time points for state and time arrays instead of saving all moves
@@ -46,9 +46,9 @@ static final double[][] stateArray = new double[nReceptors][move];
 static final double[] totalTimeArray = new double[move];
 static final int[] recCollisionArray = new int[nReceptors];
 static final int[] stateTracker = new int[nReceptors];
-static final int[] tempResidenceTracker = new int[nReceptors];
-static final int[] totalResidenceTracker = new int[nReceptors];
-static final int[] residenceCount = new int[nReceptors];
+static final double[] tempResidenceTracker = new double[nReceptors];
+static final double[] totalResidenceTracker = new double[nReceptors];
+static final double[] residenceCount = new double[nReceptors];
 static final double[] averageResidenceTime = new double[nReceptors];
 
 //optimization--> only take every 10th, 100th, etc. coordinate instead of all
@@ -355,7 +355,7 @@ static int conditionNumber = 0;
 				
 				
 /////////////////CALCULATE AVERAGE RESIDENCY TIME///////////////////////////////
-				
+		
 				for(int r = 0; r <= totalResidenceTracker.length - 1; r++){
 					if(residenceCount[r] == 0){//to avoid divide by zero
 						averageResidenceTime[r] = totalResidenceTracker[r];
@@ -365,7 +365,8 @@ static int conditionNumber = 0;
 					}
 					
 				}
-				System.out.println(Arrays.toString(totalResidenceTracker));
+				System.out.println("totalResidenceTracker: "+Arrays.toString(totalResidenceTracker));
+				System.out.println("residenceCount: "+Arrays.toString(residenceCount));
 				System.out.println("averageResidenceTime (sec): "+Arrays.toString(averageResidenceTime));
 ////////////////////////////////////////////////////////////////////////////////
 				
@@ -3378,13 +3379,13 @@ public static void checkHopArray(int index){
 		
 		////////**PLOT**/////////
 		
-		Plot totalHopPlot = new Plot("Total Number of Hops vs. Time"  ,"Time (s)"," Number of Hops ");
-		totalHopPlot.setLineWidth(2);
-		totalHopPlot.setColor(Color.RED);
-		totalHopPlot.addPoints(xHop, yHop, 0);
-		
-		
-		totalHopPlot.show();
+//		Plot totalHopPlot = new Plot("Total Number of Hops vs. Time"  ,"Time (s)"," Number of Hops ");
+//		totalHopPlot.setLineWidth(2);
+//		totalHopPlot.setColor(Color.RED);
+//		totalHopPlot.addPoints(xHop, yHop, 0);
+//		
+//		
+//		totalHopPlot.show();
 		
 		
 //////////////////////////////WRITE
