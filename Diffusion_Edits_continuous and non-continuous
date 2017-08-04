@@ -15,24 +15,24 @@ import ij.text.TextWindow;
 public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 
-static final int[] height = {40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40};     //150   //300
-static final int[] width = {40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40};	   //150   //300
-static final int[] gap = {107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107, 107};  //
+static final int[] height = {40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40};     //150   //300
+static final int[] width = {40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40};	   //150   //300
+static final int[] gap = {0, 28, 26, 25, 23, 22, 21, 20, 8, 3, 0};  //
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final double stepSize = 2.0;  //1.0   //0.5
 static final int move = 50000000; //move n positions   //50000000
 static final int nReceptors = 4;   //should not exceed height*width 
 //static final int innerReceptors = 2;  //											{0.00096, 0.0018, 0.00392, 0.008, 0.0156, 0.0312, 0.0624, 0.125, 0.25, 0.5}
-static final double[] hopProb = {0.0005, 0.00096, 0.0018, 0.00392, 0.008, 0.0156, 0.0312, 0.0624, 0.125, 0.25, 0.5, 100.0}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
-static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
-static final double[] kOn = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};   //M^-1 * s^-1   //270000.0;  3000000.0
-static final double[] kOff = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};  //s^1       3800.0     //0.00014;
+static final double[] hopProb = {0.0, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
+static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
+static final double[] kOn = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};   //M^-1 * s^-1   //270000.0;  3000000.0
+static final double[] kOff = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};  //s^1       3800.0     //0.00014;
 static final int inactiveSteps = 7694;   //0.00000013 sec/steps * 7694 steps = 1 millisecond
 static final double timeStep = 0.00000013; //0.0000003; //0.00000014  //0.000000128 //seconds
 //static final int eventInterval = 1;  //  interval based on move, not move*steps
 static final int generateActive = 100;
 static final int iterations = 20;  //50
-static final int conditions = 12;  //number of conditions to test, make sure this number matches array size of parameters
+static final int conditions = 1;  //number of conditions to test, make sure this number matches array size of parameters
 /////////////////////////////////////////////////////////////
 
 //optimization --> track state changes at time points for state and time arrays instead of saving all moves
@@ -358,7 +358,7 @@ static int conditionNumber = 0;
 		
 				for(int r = 0; r <= totalResidenceTracker.length - 1; r++){
 					if(residenceCount[r] == 0){//to avoid divide by zero
-						averageResidenceTime[r] = totalResidenceTracker[r];
+						averageResidenceTime[r] = (totalResidenceTracker[r])*timeStep;
 					}
 					else if(residenceCount[r] != 0){
 					averageResidenceTime[r] = (totalResidenceTracker[r]/residenceCount[r])*timeStep;
@@ -1894,7 +1894,10 @@ public static void checkHopArray(int index){
 			 if(receptorArray[i][0] == 0.0 || receptorArray[i][0] == 1.0){//inside
 				 tempResidenceTracker[i] +=1;//counts number of steps inside zone
 				 
-				 if(mmm == move - 1){ 			
+				 //if at end AND if res count == 0 ? so to 
+				 if(mmm == move - 1){ 	//??? may need to add more conditions for adding residence count
+					 					//??  see number density 4 txt document, average should be 130 seconds
+					 					//but it's not, count being added at last move, and 20 iterations
 //					     System.out.println("move: " +mmm );
 //						 System.out.println("rec "+i);
 //						 System.out.println("BEFORE");
@@ -1912,6 +1915,7 @@ public static void checkHopArray(int index){
 //					  	 System.out.println("residenceCount: "+Arrays.toString(residenceCount));
 						 			 
 				 }
+				
 				 
 			 }
 			 if(receptorArray[i][0] == 0.1 || receptorArray[i][0] == 1.1 ){//outside
