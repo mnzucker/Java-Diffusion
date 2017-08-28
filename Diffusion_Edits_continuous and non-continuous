@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -15,30 +17,30 @@ import ij.text.TextWindow;
 public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 
-static final int[] height = {40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40};     //150   //300
-static final int[] width = {40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40};	   //150   //300
-static final int[] gap = {0, 28, 26, 25, 23, 22, 21, 20, 8, 3, 0};  //
+static final int[] height = {20, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};     //150   //300
+static final int[] width = {20, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};	   //150   //300
+static final int[] gap = {5, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266};  //
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
-static final double stepSize = 2.0;  //1.0   //0.5
+static final double stepSize = 1.0;  //1.0   //0.5
 static final int move = 5000; //move n positions   //50000000
-static final int nReceptors = 4;   //should not exceed height*width 
+static final int nReceptors = 1;   //should not exceed height*width 
 //static final int innerReceptors = 2;  //											{0.00096, 0.0018, 0.00392, 0.008, 0.0156, 0.0312, 0.0624, 0.125, 0.25, 0.5}
-static final double[] hopProb = {0.0, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036, 0.0036}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
+static final double[] hopProb = {100.0, 50.0, 25.0, 1.0, 0.1, 0.1, 0.01, 0.0624, 0.125, 0.25, 0.5}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
 static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
 static final double[] kOn = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};   //M^-1 * s^-1   //270000.0;  3000000.0
 static final double[] kOff = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};  //s^1       3800.0     //0.00014;
-static final int inactiveSteps = 7694;   //0.00000013 sec/steps * 7694 steps = 1 millisecond
-static final double timeStep = 1.0; //0.0000003; //0.00000014  //0.000000128 //0.00000013   seconds
+static final int inactiveSteps = 435;   //0.0000023 sec/steps * 435 steps = 1 millisecond
+static final double timeStep = 1.0;   //for D =0.5 1nm step 0.00000046  //for D =0.1 1nm step 0.0000023
 //static final int eventInterval = 1;  //  interval based on move, not move*steps
 static final int generateActive = 100;
-static final int iterations = 6;  //50
+static final int iterations = 1;  //20
 static final int conditions = 1;  //number of conditions to test, make sure this number matches array size of parameters
 /////////////////////////////////////////////////////////////
 
-//optimization --> track state changes at time points for state and time arrays instead of saving all moves
-//use while loop to contain move loop in main 
+
 static final double[][] receptorArray = new double[nReceptors][3];
 static final double[][] previousReceptorArray = new double[nReceptors][3];
+static final double[] initialReceptorArray = new double[nReceptors];
 static final double[][] moveArray = new double[nReceptors][3];
 static final double[][] stepArray = new double[nReceptors][3];
 static final double[][] stateArray = new double[nReceptors][move];
@@ -52,7 +54,7 @@ static final double[] totalResidenceTracker = new double[nReceptors];
 static final double[] residenceCount = new double[nReceptors];
 static final double[] averageResidenceTime = new double[nReceptors];
 
-//optimization--> only take every 10th, 100th, etc. coordinate instead of all
+
 static ArrayList<Double> xArray = new ArrayList<Double>();
 static ArrayList<Double> yArray = new ArrayList<Double>();
 static ArrayList<Double> xOutArray = new ArrayList<Double>();
@@ -77,6 +79,10 @@ static ArrayList<Double> eventYLocationArray = new ArrayList<Double>();
 static ArrayList<Double> eventArray = new ArrayList<Double>();
 
 static ArrayList<Double> occupancyArray = new ArrayList<Double>();
+
+static ArrayList<Double> resTimeArray = new ArrayList<Double>();
+
+
 
 static double xElements = 0.0;
 static double yElements = 0.0;
@@ -158,8 +164,8 @@ static int conditionNumber = 0;
 					 //of moves within method (for conjunction with stateSwitchArray)
 					
 						int m = i;
-						if(m%5000000 == 0){
-						//System.out.println("m: "+m);
+						if(m%1000000 == 0){
+						System.out.println("m: "+m);
 						}
 						
 						movementArray(m);	
@@ -359,22 +365,38 @@ static int conditionNumber = 0;
 		
 				for(int r = 0; r <= totalResidenceTracker.length - 1; r++){
 					
-					averageResidenceTime[r] = (totalResidenceTracker[r]/residenceCount[r])*timeStep;
+							
+					if(hopInArray[r] == 0){//to avoid divide by zero
+						
+						averageResidenceTime[r] = totalResidenceTracker[r]*timeStep;
+					}
+					else if(hopInArray[r] != 0){
+						
+						 if(initialReceptorArray[r] == 1.0 || initialReceptorArray[r] == 0.0){
+							 //add 1 count if started inside
+							 System.out.println("add 1 count");
+							 hopInArray[r]+=1;
+							 
+							 averageResidenceTime[r] = (totalResidenceTracker[r]/hopInArray[r])*timeStep;
+						 }
+						 else if(initialReceptorArray[r] == 1.1 || initialReceptorArray[r] == 0.1){
+							 //don't add count if started outside
+							 averageResidenceTime[r] = (totalResidenceTracker[r]/hopInArray[r])*timeStep; 
+						 }
+						
 					
-//					if(residenceCount[r] == 0){//to avoid divide by zero
-//						residenceCount[r] = 1;
-//						averageResidenceTime[r] = (totalResidenceTracker[r]/residenceCount[r])*timeStep;
-//					}
-//					else if(residenceCount[r] != 0){
-//					averageResidenceTime[r] = (totalResidenceTracker[r]/residenceCount[r])*timeStep;
-//					}
+					}
 					
 				}
-				System.out.println("totalResidenceTracker: "+Arrays.toString(totalResidenceTracker));
-				System.out.println("residenceCount: "+Arrays.toString(residenceCount));
+				System.out.println("recArray: " +Arrays.deepToString(receptorArray));
+				System.out.println("totalResidenceTracker: "+Arrays.toString(totalResidenceTracker));		
+				//System.out.println("residenceCount: "+Arrays.toString(residenceCount));
+				System.out.println("hopInArray: "+ Arrays.toString(hopInArray));
 				System.out.println("averageResidenceTime (sec): "+Arrays.toString(averageResidenceTime));
-////////////////////////////////////////////////////////////////////////////////
 				
+////////////////////////////////////////////////////////////////////////////////
+				//System.out.println("resTimeArray: "+ resTimeArray);
+				System.out.println("resTimeArray size: "+resTimeArray.size());
 				
 				
 			//System.out.println("totalTime: "+totalTime);
@@ -514,9 +536,17 @@ static int conditionNumber = 0;
 		 
 		 }
 		 
+		 for(int i = 0; i <= initialReceptorArray.length - 1; i++){
+			 
+			 initialReceptorArray[i] = receptorArray[i][0];
+		 }
 		
 		 	System.out.println("Initial Array is :");
 			System.out.println(Arrays.deepToString(receptorArray)); 
+			System.out.println("initialReceptorArray is:");
+			System.out.println(Arrays.toString(initialReceptorArray));
+			
+			
 			
 	}/////////intialArray end
  	 
@@ -1623,7 +1653,7 @@ public static void checkHopArray(int index){
 				    //System.out.println("444don't hop AFTER: "+Arrays.deepToString(receptorArray));
 				 }
 			 }  
-////////////////***zz		
+//////////////***zz		
 //			 xElements = receptorArray[i][1];//////////////////////////zz
 //			 yElements = receptorArray[i][2];//////////////////////////zz
 //			//System.out.println("moveArray size: "+(moveArray.length-1));
@@ -1895,60 +1925,154 @@ public static void checkHopArray(int index){
 			// System.out.println(yArray);
 		 
 		 } ////////addArrays() end
-	 
+
 	 
 	 public static void residenceTime(int mmm){
 		
+		 double rounded = 0.0;
+		 
 		 for(int i = 0; i <= tempResidenceTracker.length - 1; i++){
+			 
+			 FileOutputStream fileOSRes = null;
+			 
+			 try{
+				 fileOSRes = new FileOutputStream("C:\\Users\\Mike\\Desktop\\JavaOutput\\res times\\res.bin");
+			 } catch(FileNotFoundException e){
+				 e.printStackTrace();
+			 }
+			 
+			 ByteArrayOutputStream basRes = new ByteArrayOutputStream();
+			 DataOutputStream dsRes = new DataOutputStream(basRes);
 			 
 			 
 			 if(receptorArray[i][0] == 0.0 || receptorArray[i][0] == 1.0){//inside
 				 tempResidenceTracker[i] +=1;//counts number of steps inside zone
-				 
-				 //if inside on last move, add another count
-				 if(mmm == move - 1 && hopInArray[i] != 0){ 	//??? may need to add more conditions for adding residence count
-					 					//??  see number density 4 txt document, average should be 130 seconds
-					 					//but it's not, count being added at last move, and 20 iterations
-//					     System.out.println("move: " +mmm );
-//						 System.out.println("rec "+i);
-//						 System.out.println("BEFORE");
-//						 System.out.println("receptorArray: "+Arrays.deepToString(receptorArray));
-//					  	 System.out.println("tempResidenceTracker: "+Arrays.toString(tempResidenceTracker));
-//					  	 System.out.println("totalResidenceTracker: "+Arrays.toString(totalResidenceTracker));
-//					  	 System.out.println("residenceCount: "+Arrays.toString(residenceCount));
-					 System.out.println("11111residenceCount[i]: "+(int)residenceCount[i]);
-					 System.out.println("11111iterationNumber: "+ iterationNumber);
+				 		 
+				 if(mmm == move - 1 && hopInArray[i] != 0){//if ends inside
+					 		 
+					 if(initialReceptorArray[i] == 1.0 || initialReceptorArray[i] == 0.0){//if started inside
 						 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
-						 residenceCount[i] += 1;
+						 //residenceCount[i] += 1;
+						 
+						 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
+						 bd = bd.round(new MathContext(2));
+						 
+						  rounded = bd.doubleValue();
+						 
+						 //System.out.println("111tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+						 try {
+							dsRes.writeDouble(rounded);
+						} catch (IOException e) {
+							
+							e.printStackTrace();
+						}
+						 resTimeArray.add(tempResidenceTracker[i]);
+						 
+						 tempResidenceTracker[i] = 0; //reset number of steps when go outside
+					 }
+					 
+					 //if started outside, don't add an additional count
+					 else if(initialReceptorArray[i] == 1.1 || initialReceptorArray[i] == 0.1){
+						 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
+						 
+						 //System.out.println("222tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+						
+						 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
+						 bd = bd.round(new MathContext(2));
+						 
+						  rounded = bd.doubleValue();
+						 
+						 try {
+								dsRes.writeDouble(rounded);
+							} catch (IOException e) {
+								
+								e.printStackTrace();
+							}
+						 resTimeArray.add(tempResidenceTracker[i]);
+						 
 						 tempResidenceTracker[i] = 0;
-//						 System.out.println("AFTER");
-//						 System.out.println("receptorArray: "+Arrays.deepToString(receptorArray));
-//					  	 System.out.println("tempResidenceTracker: "+Arrays.toString(tempResidenceTracker));
-//					  	 System.out.println("totalResidenceTracker: "+Arrays.toString(totalResidenceTracker));
-//					  	 System.out.println("residenceCount: "+Arrays.toString(residenceCount));
-						 			 
+					 }
+
 				 }
 				 else if(mmm == move - 1 && hopInArray[i] == 0){
+					 //System.out.println("hopInArray[i] is ZERO: "+hopInArray[i]);
 					 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
-					 residenceCount[i] = 1;
-					 tempResidenceTracker[i] = 0;
+					 
+					 //System.out.println("333tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+					 
+					 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
+					 bd = bd.round(new MathContext(2));
+					 
+					  rounded = bd.doubleValue();
+					 try {
+							dsRes.writeDouble(rounded);
+						} catch (IOException e) {
+							
+							e.printStackTrace();
+						}
+					 resTimeArray.add(tempResidenceTracker[i]);
+					 
+					 tempResidenceTracker[i] = 0; //reset number of steps when go outside
 				 }
-				
-				 
 			 }
-			 //add counts for hopping inside
-			 if(receptorArray[i][0] == 0.1 || receptorArray[i][0] == 1.1 ){//outside
+			 //add count for hopping inside
+			 if(receptorArray[i][0] == 0.1 || receptorArray[i][0] == 1.1){//if outside
 				 
-				 if(previousReceptorArray[i][0] == 0.0 || previousReceptorArray[i][0] == 1.0){ //if goes inside
+				 if(previousReceptorArray[i][0] == 0.0 || previousReceptorArray[i][0] == 1.0){ //and it hops inside
 					 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
-					 residenceCount[i] += 1;  //for averaging 
+					 residenceCount[i] += 1;  
+					 
+					 //System.out.println("444tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+					 
+					 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
+					 bd = bd.round(new MathContext(2));
+					 
+					  rounded = bd.doubleValue();
+					 try {
+							dsRes.writeDouble(rounded);
+						} catch (IOException e) {
+							
+							e.printStackTrace();
+						}
+					 resTimeArray.add(tempResidenceTracker[i]);
+					 
+					 tempResidenceTracker[i] = 0; //reset number of steps when go outside
+				 }
+				 if(mmm == move - 1 && hopInArray[i] != 0){ //if ends outside
+					 
+					 if(initialReceptorArray[i] == 1.0 || initialReceptorArray[i] == 0.0){ //starts inside, add count
+						 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
+						//residenceCount[i] += 1; 
+						 
+						 //System.out.println("555tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+						 
+						 tempResidenceTracker[i] = 0; //reset number of steps when go outside
+					 }
+					 else if(initialReceptorArray[i] == 1.1 || initialReceptorArray[i] == 0.1){ //starts outside, don't add count
+						 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
+						 
+						 //System.out.println("666tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+						 
+						 tempResidenceTracker[i] = 0;
+					 }
+					 	 
+				 }
+				 else if(mmm == move - 1 && hopInArray[i] == 0){
+					 //System.out.println("hopInArray[i] is ZERO: "+hopInArray[i]);
+					 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
+				
+					 //System.out.println("777tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+					 
 					 tempResidenceTracker[i] = 0; //reset number of steps when go outside
 				 }
 			 }
 					 
 		 }
+		 //System.out.println("resTimeArray: "+resTimeArray);
 		 
 	 }
+	 
+	
 	 
 	 public static void edgeGeneration(int index){
 		 
