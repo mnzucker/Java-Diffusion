@@ -1954,6 +1954,8 @@ public static void checkHopArray(int index){
 						 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
 						 //residenceCount[i] += 1;
 						 
+						 tempResidenceTracker[i] = tempResidenceTracker[i]*timeStep;
+						 
 						 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
 						 bd = bd.round(new MathContext(2));
 						 
@@ -1977,6 +1979,8 @@ public static void checkHopArray(int index){
 						 
 						 //System.out.println("222tempResidenceTraker[i]: "+tempResidenceTracker[i]);
 						
+						 tempResidenceTracker[i] = tempResidenceTracker[i]*timeStep;
+						 
 						 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
 						 bd = bd.round(new MathContext(2));
 						 
@@ -1999,6 +2003,8 @@ public static void checkHopArray(int index){
 					 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
 					 
 					 //System.out.println("333tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+					 
+					 tempResidenceTracker[i] = tempResidenceTracker[i]*timeStep;
 					 
 					 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
 					 bd = bd.round(new MathContext(2));
@@ -2023,6 +2029,8 @@ public static void checkHopArray(int index){
 					 residenceCount[i] += 1;  
 					 
 					 //System.out.println("444tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+					 
+					 tempResidenceTracker[i] = tempResidenceTracker[i]*timeStep;
 					 
 					 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
 					 bd = bd.round(new MathContext(2));
