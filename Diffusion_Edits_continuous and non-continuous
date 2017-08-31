@@ -17,15 +17,15 @@ import ij.text.TextWindow;
 public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 
-static final int[] height = {20, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};     //150   //300
-static final int[] width = {20, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};	   //150   //300
-static final int[] gap = {5, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266};  //
+static final int[] height = {20, 20, 20, 100, 100, 100, 100, 100, 100, 100, 100};     //150   //300
+static final int[] width = {20, 20, 20, 100, 100, 100, 100, 100, 100, 100, 100};	   //150   //300
+static final int[] gap = {5, 5, 5, 266, 266, 266, 266, 266, 266, 266, 266};  //
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final double stepSize = 1.0;  //1.0   //0.5
-static final int move = 5000; //move n positions   //50000000
+static final int move = 50000; //move n positions   //50000000
 static final int nReceptors = 1;   //should not exceed height*width 
 //static final int innerReceptors = 2;  //											{0.00096, 0.0018, 0.00392, 0.008, 0.0156, 0.0312, 0.0624, 0.125, 0.25, 0.5}
-static final double[] hopProb = {100.0, 50.0, 25.0, 1.0, 0.1, 0.1, 0.01, 0.0624, 0.125, 0.25, 0.5}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
+static final double[] hopProb = {100.0, 100.0, 100.0, 1.0, 0.1, 0.1, 0.01, 0.0624, 0.125, 0.25, 0.5}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
 static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
 static final double[] kOn = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};   //M^-1 * s^-1   //270000.0;  3000000.0
 static final double[] kOff = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};  //s^1       3800.0     //0.00014;
@@ -33,10 +33,9 @@ static final int inactiveSteps = 435;   //0.0000023 sec/steps * 435 steps = 1 mi
 static final double timeStep = 1.0;   //for D =0.5 1nm step 0.00000046  //for D =0.1 1nm step 0.0000023
 //static final int eventInterval = 1;  //  interval based on move, not move*steps
 static final int generateActive = 100;
-static final int iterations = 1;  //20
-static final int conditions = 1;  //number of conditions to test, make sure this number matches array size of parameters
+static final int iterations = 3;  //20
+static final int conditions = 3;  //number of conditions to test, make sure this number matches array size of parameters
 /////////////////////////////////////////////////////////////
-
 
 static final double[][] receptorArray = new double[nReceptors][3];
 static final double[][] previousReceptorArray = new double[nReceptors][3];
@@ -80,7 +79,7 @@ static ArrayList<Double> eventArray = new ArrayList<Double>();
 
 static ArrayList<Double> occupancyArray = new ArrayList<Double>();
 
-static ArrayList<Double> resTimeArray = new ArrayList<Double>();
+//static ArrayList<Double> resTimeArray = new ArrayList<Double>();
 
 
 
@@ -101,6 +100,8 @@ static int continuousIteration = 0;
 static int conditionNumber = 0;
 
 
+static FileOutputStream fileOSRes = null;
+static FileOutputStream fileOS = null;	
 
 
 	public static void main(String args[]) throws IOException{
@@ -140,9 +141,14 @@ static int conditionNumber = 0;
 					e.printStackTrace();
 				}
 				
-				FileOutputStream fileOS = null;
-				
-				
+					
+				 try{
+					 fileOSRes = new FileOutputStream("C:\\Users\\Mike\\Desktop\\JavaOutput\\res times "+ "condition "+ conditionNumber +" iteration "+iterationNumber+ ".bin");
+					 
+				 } catch(FileNotFoundException er){
+					 er.printStackTrace();
+				 }			
+						
 				try {
 					fileOS = new FileOutputStream("C:\\Users\\Mike\\Documents\\BinaryFile.bin");
 				} catch (FileNotFoundException e1) {
@@ -335,6 +341,12 @@ static int conditionNumber = 0;
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				try{
+					 fileOSRes.close();
+				 }catch (IOException er){
+					 er.printStackTrace();
+				 }
+				
 				//System.out.println("collisionArray: "+collisionArray);
 				//System.out.println("timePointArray: "+timePointArray);
 				//System.out.println("collisionPerTimeArray: "+collisionPerTimeArray);
@@ -389,14 +401,14 @@ static int conditionNumber = 0;
 					
 				}
 				System.out.println("recArray: " +Arrays.deepToString(receptorArray));
-				System.out.println("totalResidenceTracker: "+Arrays.toString(totalResidenceTracker));		
+				//System.out.println("totalResidenceTracker: "+Arrays.toString(totalResidenceTracker));		
 				//System.out.println("residenceCount: "+Arrays.toString(residenceCount));
-				System.out.println("hopInArray: "+ Arrays.toString(hopInArray));
+				//System.out.println("hopInArray: "+ Arrays.toString(hopInArray));
 				System.out.println("averageResidenceTime (sec): "+Arrays.toString(averageResidenceTime));
 				
 ////////////////////////////////////////////////////////////////////////////////
 				//System.out.println("resTimeArray: "+ resTimeArray);
-				System.out.println("resTimeArray size: "+resTimeArray.size());
+				//System.out.println("resTimeArray size: "+resTimeArray.size());
 				
 				
 			//System.out.println("totalTime: "+totalTime);
@@ -1933,21 +1945,11 @@ public static void checkHopArray(int index){
 		 
 		 for(int i = 0; i <= tempResidenceTracker.length - 1; i++){
 			 
-			 FileOutputStream fileOSRes = null;
-			 
-			 try{
-				 fileOSRes = new FileOutputStream("C:\\Users\\Mike\\Desktop\\JavaOutput\\res times\\res.bin");
-			 } catch(FileNotFoundException e){
-				 e.printStackTrace();
-			 }
-			 
-			 ByteArrayOutputStream basRes = new ByteArrayOutputStream();
-			 DataOutputStream dsRes = new DataOutputStream(basRes);
-			 
-			 
+
 			 if(receptorArray[i][0] == 0.0 || receptorArray[i][0] == 1.0){//inside
 				 tempResidenceTracker[i] +=1;//counts number of steps inside zone
-				 		 
+				 
+				
 				 if(mmm == move - 1 && hopInArray[i] != 0){//if ends inside
 					 		 
 					 if(initialReceptorArray[i] == 1.0 || initialReceptorArray[i] == 0.0){//if started inside
@@ -1956,19 +1958,14 @@ public static void checkHopArray(int index){
 						 
 						 tempResidenceTracker[i] = tempResidenceTracker[i]*timeStep;
 						 
-						 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
-						 bd = bd.round(new MathContext(2));
-						 
-						  rounded = bd.doubleValue();
+						 BigDecimal bd1 = new BigDecimal(tempResidenceTracker[i]);
+						 bd1 = bd1.round(new MathContext(2));						 
+						 rounded = bd1.doubleValue();
+						 resTimeWrite(rounded);
 						 
 						 //System.out.println("111tempResidenceTraker[i]: "+tempResidenceTracker[i]);
-						 try {
-							dsRes.writeDouble(rounded);
-						} catch (IOException e) {
-							
-							e.printStackTrace();
-						}
-						 resTimeArray.add(tempResidenceTracker[i]);
+						 						 
+						 //resTimeArray.add(tempResidenceTracker[i]);
 						 
 						 tempResidenceTracker[i] = 0; //reset number of steps when go outside
 					 }
@@ -1977,22 +1974,17 @@ public static void checkHopArray(int index){
 					 else if(initialReceptorArray[i] == 1.1 || initialReceptorArray[i] == 0.1){
 						 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
 						 
-						 //System.out.println("222tempResidenceTraker[i]: "+tempResidenceTracker[i]);
 						
 						 tempResidenceTracker[i] = tempResidenceTracker[i]*timeStep;
 						 
-						 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
-						 bd = bd.round(new MathContext(2));
+						 BigDecimal bd2 = new BigDecimal(tempResidenceTracker[i]);
+						 bd2 = bd2.round(new MathContext(2));					 
+						 rounded = bd2.doubleValue();
+						 resTimeWrite(rounded);
 						 
-						  rounded = bd.doubleValue();
+						 //System.out.println("222tempResidenceTraker[i]: "+tempResidenceTracker[i]);
 						 
-						 try {
-								dsRes.writeDouble(rounded);
-							} catch (IOException e) {
-								
-								e.printStackTrace();
-							}
-						 resTimeArray.add(tempResidenceTracker[i]);
+						 //resTimeArray.add(tempResidenceTracker[i]);
 						 
 						 tempResidenceTracker[i] = 0;
 					 }
@@ -2002,21 +1994,17 @@ public static void checkHopArray(int index){
 					 //System.out.println("hopInArray[i] is ZERO: "+hopInArray[i]);
 					 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
 					 
-					 //System.out.println("333tempResidenceTraker[i]: "+tempResidenceTracker[i]);
 					 
 					 tempResidenceTracker[i] = tempResidenceTracker[i]*timeStep;
 					 
-					 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
-					 bd = bd.round(new MathContext(2));
+					 BigDecimal bd3 = new BigDecimal(tempResidenceTracker[i]);
+					 bd3 = bd3.round(new MathContext(2));	 
+					 rounded = bd3.doubleValue();
+					 resTimeWrite(rounded);
 					 
-					  rounded = bd.doubleValue();
-					 try {
-							dsRes.writeDouble(rounded);
-						} catch (IOException e) {
-							
-							e.printStackTrace();
-						}
-					 resTimeArray.add(tempResidenceTracker[i]);
+					 //System.out.println("333tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+					 					 
+					 //resTimeArray.add(tempResidenceTracker[i]);
 					 
 					 tempResidenceTracker[i] = 0; //reset number of steps when go outside
 				 }
@@ -2028,21 +2016,17 @@ public static void checkHopArray(int index){
 					 totalResidenceTracker[i] = totalResidenceTracker[i] + tempResidenceTracker[i];
 					 residenceCount[i] += 1;  
 					 
-					 //System.out.println("444tempResidenceTraker[i]: "+tempResidenceTracker[i]);
 					 
 					 tempResidenceTracker[i] = tempResidenceTracker[i]*timeStep;
 					 
-					 BigDecimal bd = new BigDecimal(tempResidenceTracker[i]);
-					 bd = bd.round(new MathContext(2));
+					 BigDecimal bd4 = new BigDecimal(tempResidenceTracker[i]);
+					 bd4 = bd4.round(new MathContext(2)); 
+					 rounded = bd4.doubleValue();
+					 resTimeWrite(rounded);
 					 
-					  rounded = bd.doubleValue();
-					 try {
-							dsRes.writeDouble(rounded);
-						} catch (IOException e) {
-							
-							e.printStackTrace();
-						}
-					 resTimeArray.add(tempResidenceTracker[i]);
+					 //System.out.println("444tempResidenceTraker[i]: "+tempResidenceTracker[i]);
+					 
+					 //resTimeArray.add(tempResidenceTracker[i]);
 					 
 					 tempResidenceTracker[i] = 0; //reset number of steps when go outside
 				 }
@@ -2074,13 +2058,43 @@ public static void checkHopArray(int index){
 					 tempResidenceTracker[i] = 0; //reset number of steps when go outside
 				 }
 			 }
-					 
+
 		 }
+		 	 
 		 //System.out.println("resTimeArray: "+resTimeArray);
-		 
+		
 	 }
 	 
-	
+	public static void resTimeWrite(double res){
+		
+		 
+		 ByteArrayOutputStream basRes = new ByteArrayOutputStream();
+		 DataOutputStream dsRes = new DataOutputStream(basRes);
+		 
+		 try {
+			 
+			//System.out.println("write value: "+res);
+			dsRes.writeFloat( (float) res);
+			
+		} catch (IOException er) {
+			
+			er.printStackTrace();
+		}
+		 
+		 byte[] byteData = basRes.toByteArray();
+		 
+		 try{
+			 fileOSRes.write(byteData, 0, byteData.length);
+		 }catch (IOException er){
+			 er.printStackTrace();
+		 }
+		 try{
+			 fileOSRes.flush();
+		 }catch (IOException er){
+			 er.printStackTrace();
+		 }
+		 
+	}
 	 
 	 public static void edgeGeneration(int index){
 		 
@@ -2826,17 +2840,21 @@ public static void checkHopArray(int index){
  String filePathEvent = "C:\\Users\\Mike\\Desktop\\JavaOutput\\EventPlot.bin";
 		 
 		 File f = new File(filePathEvent);
-		 if(f.exists() && !f.isDirectory()){
+		 //if(f.exists() && !f.isDirectory()){
+		 
 			 //System.out.println(filePathEvent+ " exists");
 			 StringBuilder newPath = new StringBuilder(filePathEvent);
 			 newPath.delete(filePathEvent.length() - 4, filePathEvent.length());
 			 //System.out.println(newPath.toString());
 			 String iterationString = Integer.toString(continuousIteration);
-			 newPath.append(iterationString + ".bin");
+			 newPath.append(" condition "+conditionNumber + " iteration "+iterationNumber+".bin");
 			 //System.out.println(newPath.toString());
 			 filePathEvent = newPath.toString();
 			 //System.out.println(filePathEvent);
-		 }
+			 
+		 //}
+			 
+			 
 		try {
 			fileOSEvent = new FileOutputStream(filePathEvent);
 		
@@ -3548,17 +3566,17 @@ public static void checkHopArray(int index){
 		 String filePathHop = "C:\\Users\\Mike\\Desktop\\JavaOutput\\HopPlot.bin";
 		 
 		 File f = new File(filePathHop);
-		 if(f.exists() && !f.isDirectory()){
+		// if(f.exists() && !f.isDirectory()){
 			 //System.out.println(filePathHop+ " exists");
 			 StringBuilder newPath = new StringBuilder(filePathHop);
 			 newPath.delete(filePathHop.length() - 4, filePathHop.length());
 			 //System.out.println(newPath.toString());
 			 String iterationString = Integer.toString(continuousIteration);
-			 newPath.append(iterationString + ".bin");
+			 newPath.append(" condition "+conditionNumber + " iteration "+iterationNumber+".bin");
 			 //System.out.println(newPath.toString());
 			 filePathHop = newPath.toString();
 			//System.out.println(filePathHop);
-		 }
+		 //}
 			try {
 				fileOSHop = new FileOutputStream(filePathHop);
 			
