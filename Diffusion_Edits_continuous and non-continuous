@@ -17,13 +17,13 @@ import ij.text.TextWindow;
 public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 
-static final int[] height = {20, 20, 20, 100, 100, 100, 100, 100, 100, 100, 100};     //150   //300
-static final int[] width = {20, 20, 20, 100, 100, 100, 100, 100, 100, 100, 100};	   //150   //300
-static final int[] gap = {5, 5, 5, 266, 266, 266, 266, 266, 266, 266, 266};  //
+static final int[] height = {50, 20, 20, 100, 100, 100, 100, 100, 100, 100, 100};     //150   //300
+static final int[] width = {50, 20, 20, 100, 100, 100, 100, 100, 100, 100, 100};	   //150   //300
+static final int[] gap = {2, 10, 50, 266, 266, 266, 266, 266, 266, 266, 266};  //
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final double stepSize = 1.0;  //1.0   //0.5
-static final int move = 50000; //move n positions   //50000000
-static final int nReceptors = 1;   //should not exceed height*width 
+static final int move = 3000000; //move n positions   //50000000
+static final int nReceptors = 5;   //should not exceed height*width 
 //static final int innerReceptors = 2;  //											{0.00096, 0.0018, 0.00392, 0.008, 0.0156, 0.0312, 0.0624, 0.125, 0.25, 0.5}
 static final double[] hopProb = {100.0, 100.0, 100.0, 1.0, 0.1, 0.1, 0.01, 0.0624, 0.125, 0.25, 0.5}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
 static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
@@ -32,14 +32,21 @@ static final double[] kOff = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
 static final int inactiveSteps = 435;   //0.0000023 sec/steps * 435 steps = 1 millisecond
 static final double timeStep = 1.0;   //for D =0.5 1nm step 0.00000046  //for D =0.1 1nm step 0.0000023
 //static final int eventInterval = 1;  //  interval based on move, not move*steps
+
+static final int dummyMoves = 300000;
+static final int dummyIterations = 5;
+
 static final int generateActive = 100;
-static final int iterations = 3;  //20
-static final int conditions = 3;  //number of conditions to test, make sure this number matches array size of parameters
+static final int iterations = 1;  //20
+static final int conditions = 1;  //number of conditions to test, make sure this number matches array size of parameters
 /////////////////////////////////////////////////////////////
 
 static final double[][] receptorArray = new double[nReceptors][3];
 static final double[][] previousReceptorArray = new double[nReceptors][3];
 static final double[] initialReceptorArray = new double[nReceptors];
+static final double[] dummyReceptor = new double[3];
+static final double[] dummyMoveArray = new double[3];
+static final double[] dummyResTimeArray = new double[dummyIterations];
 static final double[][] moveArray = new double[nReceptors][3];
 static final double[][] stepArray = new double[nReceptors][3];
 static final double[][] stateArray = new double[nReceptors][move];
@@ -95,6 +102,8 @@ static double events = 0.0;
 static double totalConfined = 0.0;
 static double nConfined = 0.0;
 static double averageOccupancy = 0.0;
+static double resSum = 0.0;
+static double finalAverageResTime = 0.0;
 static int iterationNumber = 0;
 static int continuousIteration = 0;
 static int conditionNumber = 0;
@@ -386,7 +395,7 @@ static FileOutputStream fileOS = null;
 						
 						 if(initialReceptorArray[r] == 1.0 || initialReceptorArray[r] == 0.0){
 							 //add 1 count if started inside
-							 System.out.println("add 1 count");
+							// System.out.println("add 1 count");
 							 hopInArray[r]+=1;
 							 
 							 averageResidenceTime[r] = (totalResidenceTracker[r]/hopInArray[r])*timeStep;
@@ -404,7 +413,16 @@ static FileOutputStream fileOS = null;
 				//System.out.println("totalResidenceTracker: "+Arrays.toString(totalResidenceTracker));		
 				//System.out.println("residenceCount: "+Arrays.toString(residenceCount));
 				//System.out.println("hopInArray: "+ Arrays.toString(hopInArray));
-				System.out.println("averageResidenceTime (sec): "+Arrays.toString(averageResidenceTime));
+				System.out.println("averageResidenceTime per receptor (sec): "+Arrays.toString(averageResidenceTime));
+				
+				//average of all receptor res time averages					
+				for(int i = 0; i < averageResidenceTime.length; i++){
+					
+					resSum = resSum + averageResidenceTime[i];		
+				}
+				finalAverageResTime = resSum/(averageResidenceTime.length);
+				System.out.println("finalAverageResTime: "+finalAverageResTime + "seconds");
+				
 				
 ////////////////////////////////////////////////////////////////////////////////
 				//System.out.println("resTimeArray: "+ resTimeArray);
@@ -480,6 +498,8 @@ static FileOutputStream fileOS = null;
 								
 	}//iterations end
 		
+		dummyMovement();
+		
 		/////////////////////////////////////////cc		
 		//only for CONTINUOUS hop and dimerization data between sim iterations, clear afterwards
 		for(int a = 0; a <= recCollisionArray.length - 1; a++){
@@ -517,13 +537,14 @@ static FileOutputStream fileOS = null;
 	
 	 public static synchronized void initialArray(){
 	
+			 
+		 ///////////////////////////////////////
+		 
 		 Random rand = new Random();
 		 for(int i = 0; i <= nReceptors - 1; i++){
 		
 		 //if( i < innerReceptors ){
-			
-			 
-		
+				
 			//int randReceptor = rand.nextInt(2); //0 inactive, 1 active
 			int randRow = rand.nextInt(height[conditionNumber] + gap[conditionNumber]);//random row within height constraint 
 			int randCol = rand.nextInt(width[conditionNumber] + gap[conditionNumber]);//random column within width constraint 
@@ -555,8 +576,8 @@ static FileOutputStream fileOS = null;
 		
 		 	System.out.println("Initial Array is :");
 			System.out.println(Arrays.deepToString(receptorArray)); 
-			System.out.println("initialReceptorArray is:");
-			System.out.println(Arrays.toString(initialReceptorArray));
+//			System.out.println("initialReceptorArray is:");
+//			System.out.println(Arrays.toString(initialReceptorArray));
 			
 			
 			
@@ -816,8 +837,7 @@ public static void checkHopArray(int index){
 				 
 				 //receptorArray state carried over to moveArray state
 				 moveArray[i][0] = receptorArray[i][0];
-				 
-				 
+				 			 
 				 //float randState = rand.nextInt((int) (2));
 				 //moveArray[i][0] = randState;
 				 
@@ -1388,8 +1408,7 @@ public static void checkHopArray(int index){
 					 }
 				 }
 			//System.out.println("stepArray inside i loop: "+Arrays.deepToString(stepArray));
-				 
-				 
+				 		 
 		
 		}////////////////////end of i step for loop
 			
@@ -2446,6 +2465,134 @@ public static void checkHopArray(int index){
 	 }
 	 
 	 
+	 
+	///////////////////////DUMMY RECEPTOR METHODS////////////////////
+	 
+	 
+	 //this method called after all iterations are complete (per condition)
+	 public static void dummyMovement(){
+		 
+ ////set dummy rec in middle of zone////
+		 
+		 dummyReceptor[0] = 0.0;
+		 dummyReceptor[1] = width[conditionNumber]/2;
+		 dummyReceptor[2] = height[conditionNumber]/2;
+		 
+		 double dummySteps = 0.0;
+		 double dummyCount = 0.0;
+		 double dummyResTime = 0.0;  //res time from each dummyIteration stored in array
+		 double stepsToBound = 0.0;
+		 double sum = 0.0;
+		 double finalDummyResTime = 0.0; //averaging res times from all dummyIterations
+		 System.out.println("dummy receptor: "+Arrays.toString(dummyReceptor));
+		 
+		 Random dummyRand = new Random();
+		 
+		 for(int i = 0; i < dummyIterations; i++){
+			 
+		 	for(int j = 0; j <= dummyMoves - 1; j++){
+			 
+			 
+			 int dummyRandMove = dummyRand.nextInt(2);
+			 int dummyRandDir = dummyRand.nextInt(2);
+			 
+			 if(dummyRandMove == 0){ //row change
+				 if(dummyRandDir == 0){ //negative value
+					 dummyMoveArray[1] = -stepSize;
+					 
+				 }
+				 if(dummyRandDir == 1){  //positive value
+					 dummyMoveArray[1] = stepSize;
+					 
+				 }	 
+			 }
+			 if(dummyRandMove == 1){  //column change
+				 if(dummyRandDir == 0){  //negative value
+					 dummyMoveArray[2] = -stepSize;
+					 
+				 }
+				 if(dummyRandDir == 1){  //positive value
+					 dummyMoveArray[2] = stepSize;
+				 }	 
+			 }
+			 
+			 //add move to dummy receptor
+			 dummyReceptor[1] = dummyReceptor[1] + dummyMoveArray[1];
+			 dummyReceptor[2] = dummyReceptor[2] + dummyMoveArray[2];
+			 dummySteps+= 1.0;
+			 
+			 //System.out.println("STEP: "+dummySteps);
+			 //clear moveArray after adding
+			 dummyMoveArray[1] = 0.0;
+			 dummyMoveArray[2] = 0.0;
+			 
+			 ///BOUNDARY CONDITIONS//////////
+			 
+			 //if pass any edge, reset back to center
+			 if(dummyReceptor[1] < 0 || dummyReceptor[1] > width[conditionNumber] 
+					 || dummyReceptor[2] < 0 || dummyReceptor[2] > height[conditionNumber]){ 
+				 
+				 //System.out.println("Boundary Reached at step "+dummySteps);
+				 
+				 stepsToBound = dummySteps;
+				 dummyReceptor[1] = width[conditionNumber]/2;
+				 dummyReceptor[2] = height[conditionNumber]/2;
+				 dummyCount += 1.0;
+				 
+				 //System.out.println("stepsToBound: "+stepsToBound);
+				 //reset for regenerated dummyReceptor
+				 //dummySteps = 0.0;
+			 }
+			 
+			 ///END OF BOUNDARY CONDITIONS////
+		 		 
+		 	}//end of dummy move loop
+		 	
+		 	//Only want to include steps that reached boundary
+		 	//so exclude steps after last boundary breach 
+		 	dummySteps = dummyMoves - (dummyMoves - stepsToBound);
+		 	
+		 	//System.out.println("dummySteps after exclusion: "+dummySteps);
+		 	//add one more count for averaging
+		 	//dummyCount += 1; 
+		 	if(dummyCount == 0.0){
+		 		dummyResTime = dummySteps;
+		 		System.out.println("no escapes");
+		 		
+		 		//System.out.println("111dummySteps: "+dummySteps);
+		 		//System.out.println("111dummyCount: "+ dummyCount);
+			 	//System.out.println("111dummyResTime i= " +i+": "+dummyResTime);
+		 	}
+		 	else{ 		
+		 		dummyResTime = (dummySteps/dummyCount);
+		 		
+		 		//System.out.println("222dummySteps: "+dummySteps);
+		 		//System.out.println("222dummyCount: "+ dummyCount);
+			 	//System.out.println("222dummyResTime i= " +i+": "+dummyResTime);
+		 	}
+	
+		 	dummyResTimeArray[i] = dummyResTime;
+		
+		 	dummySteps = 0.0;
+		 	dummyCount = 0.0;
+		 	
+		 }//end of dummy iterations
+		 
+		 	System.out.println("dummyResTimeArray: "+Arrays.toString(dummyResTimeArray));
+		 
+		 for( int i = 0; i < dummyResTimeArray.length; i++){
+			  
+			 sum = sum + dummyResTimeArray[i];
+			 //System.out.println("sum: "+sum);
+		 }
+		
+		 finalDummyResTime = (sum/dummyResTimeArray.length)*timeStep;
+		 System.out.println("finalDummyResTime: "+finalDummyResTime+" seconds");
+	 }
+	 
+	 
+	 
+   //////////////////////////////////////////////////////////////////
 	 
 	 public static void plotTrajectory(){
 ///////////////////////////////////////////zz 
