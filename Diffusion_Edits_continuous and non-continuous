@@ -17,28 +17,28 @@ import ij.text.TextWindow;
 public class Diffusion {
 ///////////////////////////////Input Parameters////////////////
 
-static final int[] height = {50, 20, 20, 100, 100, 100, 100, 100, 100, 100, 100};     //150   //300
-static final int[] width = {50, 20, 20, 100, 100, 100, 100, 100, 100, 100, 100};	   //150   //300
-static final int[] gap = {2, 10, 50, 266, 266, 266, 266, 266, 266, 266, 266};  //
+static final int[] height = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};     //150   //300
+static final int[] width = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};	   //150   //300
+static final int[] gap = {266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266};  //
 static final int steps = 0; //steps added together before moving **if steps > 0, de-comment line in addArrays()
 static final double stepSize = 1.0;  //1.0   //0.5
-static final int move = 3000000; //move n positions   //50000000
-static final int nReceptors = 5;   //should not exceed height*width 
+static final int move = 10; //move n positions   //50000000
+static final int nReceptors = 4;   //should not exceed height*width 
 //static final int innerReceptors = 2;  //											{0.00096, 0.0018, 0.00392, 0.008, 0.0156, 0.0312, 0.0624, 0.125, 0.25, 0.5}
-static final double[] hopProb = {100.0, 100.0, 100.0, 1.0, 0.1, 0.1, 0.01, 0.0624, 0.125, 0.25, 0.5}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
-static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
-static final double[] kOn = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};   //M^-1 * s^-1   //270000.0;  3000000.0
-static final double[] kOff = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};  //s^1       3800.0     //0.00014;
-static final int inactiveSteps = 435;   //0.0000023 sec/steps * 435 steps = 1 millisecond
-static final double timeStep = 1.0;   //for D =0.5 1nm step 0.00000046  //for D =0.1 1nm step 0.0000023
+static final double[] hopProb = {0.0005, 0.00096, 0.0018, 0.00392, 0.008, 0.0156, 0.0312, 0.0624, 0.125, 0.25, 0.5, 100.0}; //0 to 100   //**if confining to inner boundary only, change eventCheck()
+static final double[] concentration = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; //M     //0.000001  {1.0, 0.0001}
+static final double[] kOn = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};   //M^-1 * s^-1   //270000.0;  3000000.0
+static final double[] kOff = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};  //s^1       3800.0     //0.00014;
+static final int inactiveSteps = 2174;   //0.00000046 sec/steps * 2174 steps = 1 ms //0.0000023 sec/steps * 435 steps = 1 ms
+static final double timeStep = 0.00000046;   //for D =0.5 1nm step 0.00000046  //for D =0.1 1nm step 0.0000023
 //static final int eventInterval = 1;  //  interval based on move, not move*steps
 
-static final int dummyMoves = 300000;
-static final int dummyIterations = 5;
+static final int dummyMoves = 100000;
+static final int dummyIterations = 4;
 
 static final int generateActive = 100;
-static final int iterations = 1;  //20
-static final int conditions = 1;  //number of conditions to test, make sure this number matches array size of parameters
+static final int iterations = 20;  //20
+static final int conditions = 12;  //number of conditions to test, make sure this number matches array size of parameters
 /////////////////////////////////////////////////////////////
 
 static final double[][] receptorArray = new double[nReceptors][3];
@@ -179,7 +179,7 @@ static FileOutputStream fileOS = null;
 					 //of moves within method (for conjunction with stateSwitchArray)
 					
 						int m = i;
-						if(m%1000000 == 0){
+						if(m%10000000 == 0){
 						System.out.println("m: "+m);
 						}
 						
@@ -361,7 +361,7 @@ static FileOutputStream fileOS = null;
 				//System.out.println("collisionPerTimeArray: "+collisionPerTimeArray);
 				
 				
-				System.out.println("recCollisionArray: "+Arrays.toString(recCollisionArray));
+				//System.out.println("recCollisionArray: "+Arrays.toString(recCollisionArray)); //qqq
 				
 				averageOccupancy();
 				System.out.println(".");
@@ -409,11 +409,12 @@ static FileOutputStream fileOS = null;
 					}
 					
 				}
-				System.out.println("recArray: " +Arrays.deepToString(receptorArray));
+				//System.out.println("recArray: " +Arrays.deepToString(receptorArray));
 				//System.out.println("totalResidenceTracker: "+Arrays.toString(totalResidenceTracker));		
 				//System.out.println("residenceCount: "+Arrays.toString(residenceCount));
 				//System.out.println("hopInArray: "+ Arrays.toString(hopInArray));
-				System.out.println("averageResidenceTime per receptor (sec): "+Arrays.toString(averageResidenceTime));
+				
+				//System.out.println("averageResidenceTime per receptor (sec): "+Arrays.toString(averageResidenceTime)); //qqq
 				
 				//average of all receptor res time averages					
 				for(int i = 0; i < averageResidenceTime.length; i++){
@@ -421,7 +422,7 @@ static FileOutputStream fileOS = null;
 					resSum = resSum + averageResidenceTime[i];		
 				}
 				finalAverageResTime = resSum/(averageResidenceTime.length);
-				System.out.println("finalAverageResTime: "+finalAverageResTime + "seconds");
+				//System.out.println("finalAverageResTime: "+finalAverageResTime + " seconds"); //qqq
 				
 				
 ////////////////////////////////////////////////////////////////////////////////
@@ -466,6 +467,7 @@ static FileOutputStream fileOS = null;
 	totalTime = 0.0;	
 	a = 0;
 	averageOccupancy = 0.0;
+	resSum = 0.0;
 //NON-CONTINOUS
 	
 	//timePoint = 0.0;
@@ -1553,7 +1555,7 @@ public static void checkHopArray(int index){
 				 }
 				 else{			  //don't hop
 				 //System.out.println("111don't hop BEFORE: "+Arrays.deepToString(receptorArray));
-				 receptorArray[i][1] = 0;
+				 receptorArray[i][1] = 0.0;
 				 //receptorArray[i][1] = (0 + stepSize);
 				 //System.out.println("111don't hop AFTER: "+Arrays.deepToString(receptorArray));
 				 }
@@ -1637,7 +1639,7 @@ public static void checkHopArray(int index){
 				 }
 				 else{			   //don't hop
 				    //System.out.println("333don't hop BEFORE: "+Arrays.deepToString(receptorArray));
-				    receptorArray[i][2] = 0;
+				    receptorArray[i][2] = 0.0;
 				    //receptorArray[i][2] = (0 + stepSize);
 				    //System.out.println("333don't hop AFTER: "+Arrays.deepToString(receptorArray));
 				 }
@@ -2490,6 +2492,8 @@ public static void checkHopArray(int index){
 		 
 		 for(int i = 0; i < dummyIterations; i++){
 			 
+			 System.out.println("dummyIteration: "+i);
+			 
 		 	for(int j = 0; j <= dummyMoves - 1; j++){
 			 
 			 
@@ -2528,20 +2532,75 @@ public static void checkHopArray(int index){
 			 
 			 ///BOUNDARY CONDITIONS//////////
 			 
-			 //if pass any edge, reset back to center
-			 if(dummyReceptor[1] < 0 || dummyReceptor[1] > width[conditionNumber] 
-					 || dummyReceptor[2] < 0 || dummyReceptor[2] > height[conditionNumber]){ 
+			 
+			 if(dummyReceptor[1] < 0 ){ 
 				 
-				 //System.out.println("Boundary Reached at step "+dummySteps);
+				 	boolean hop = hopProbability();
+				 	if(hop == true){
+				 		//System.out.println("Boundary Reached at step "+dummySteps);
 				 
-				 stepsToBound = dummySteps;
-				 dummyReceptor[1] = width[conditionNumber]/2;
-				 dummyReceptor[2] = height[conditionNumber]/2;
-				 dummyCount += 1.0;
+				 		stepsToBound = dummySteps;
+				 		dummyReceptor[1] = width[conditionNumber]/2;
+				 		dummyReceptor[2] = height[conditionNumber]/2;
+				 		dummyCount += 1.0;
 				 
 				 //System.out.println("stepsToBound: "+stepsToBound);
-				 //reset for regenerated dummyReceptor
-				 //dummySteps = 0.0;
+				 	}
+				 	else{
+				 		dummyReceptor[1] = 0.0;
+				 	}		 
+			 }
+			 if(dummyReceptor[1] > width[conditionNumber] ){ 
+				 
+				 	boolean hop = hopProbability();
+				 	if(hop == true){
+				 		//System.out.println("Boundary Reached at step "+dummySteps);
+				 
+				 		stepsToBound = dummySteps;
+				 		dummyReceptor[1] = width[conditionNumber]/2;
+				 		dummyReceptor[2] = height[conditionNumber]/2;
+				 		dummyCount += 1.0;
+				 
+				 //System.out.println("stepsToBound: "+stepsToBound);
+				 	}
+				 	else{
+				 		dummyReceptor[1] = width[conditionNumber];
+				 	}				 
+			 }
+			 if(dummyReceptor[2] < 0 ){ 
+				 
+				 	boolean hop = hopProbability();
+				 	if(hop == true){
+				 		//System.out.println("Boundary Reached at step "+dummySteps);
+				 
+				 		stepsToBound = dummySteps;
+				 		dummyReceptor[1] = width[conditionNumber]/2;
+				 		dummyReceptor[2] = height[conditionNumber]/2;
+				 		dummyCount += 1.0;
+				 
+				 //System.out.println("stepsToBound: "+stepsToBound);
+				 	}
+				 	else{
+				 		dummyReceptor[2] = 0.0;
+				 	}				 
+			 }
+			 if(dummyReceptor[2] > height[conditionNumber] ){ 
+				 
+				 	boolean hop = hopProbability();
+				 	if(hop == true){
+				 		//System.out.println("Boundary Reached at step "+dummySteps);
+				 
+				 		stepsToBound = dummySteps;
+				 		dummyReceptor[1] = width[conditionNumber]/2;
+				 		dummyReceptor[2] = height[conditionNumber]/2;
+				 		dummyCount += 1.0;
+				 
+				 //System.out.println("stepsToBound: "+stepsToBound);
+				 	}
+				 	else{
+				 		dummyReceptor[2] = height[conditionNumber];
+				 	}
+				 
 			 }
 			 
 			 ///END OF BOUNDARY CONDITIONS////
@@ -2578,6 +2637,7 @@ public static void checkHopArray(int index){
 		 	
 		 }//end of dummy iterations
 		 
+		 	//System.out.println();
 		 	System.out.println("dummyResTimeArray: "+Arrays.toString(dummyResTimeArray));
 		 
 		 for( int i = 0; i < dummyResTimeArray.length; i++){
